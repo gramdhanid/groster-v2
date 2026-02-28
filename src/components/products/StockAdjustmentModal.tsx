@@ -19,10 +19,6 @@ interface StockAdjustmentModalProps {
     } | null;
 }
 
-const formatNumber = (num: number) => {
-    return num === 0 ? '' : num.toLocaleString('id-ID');
-};
-
 export default function StockAdjustmentModal({ isOpen, onClose, onSave, product }: StockAdjustmentModalProps) {
     const [adjustment, setAdjustment] = useState<number>(0);
     const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null);
@@ -159,7 +155,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                                 <input
                                     type="number"
                                     value={adjustment === 0 ? '' : adjustment}
-                                    onChange={(e) => setAdjustment(formatNumber(e.target.value))}
+                                    onChange={(e) => setAdjustment(Number(e.target.value) || 0)}
                                     placeholder="0"
                                     className="h-14 bg-slate-800/50 border border-slate-700 rounded-2xl text-center text-xl font-black outline-none focus:ring-2 focus:ring-primary shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />

@@ -33,7 +33,7 @@ export default function LineChart({ data, width = 0, height = 300 }: LineChartPr
                 },
                 {
                     grid: { stroke: '#eee', width: 1 },
-                    values: (u, vals) => vals.map(v => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(v)),
+                    values: (_u, vals) => vals.map(v => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(v)),
                 }
             ],
             series: [
@@ -42,7 +42,7 @@ export default function LineChart({ data, width = 0, height = 300 }: LineChartPr
                     stroke: '#10b981', // Tailwind primary
                     fill: 'rgba(16, 185, 129, 0.1)',
                     width: 2,
-                    value: (u, v) => v == null ? '-' : formatCurrency(v),
+                    value: (_u, v) => v == null ? '-' : formatCurrency(v),
                 }
             ],
             cursor: {

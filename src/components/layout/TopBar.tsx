@@ -4,7 +4,7 @@ import SyncStatusModal from './SyncStatusModal';
 
 export default function TopBar() {
     const pendingCount = 0; // TODO: Connect to sync store
-    const [syncStatus, setSyncStatus] = useState<'synced' | 'pending' | 'error'>('synced');
+    const [syncStatus] = useState<'synced' | 'pending' | 'error'>('synced');
     const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
 
     return (

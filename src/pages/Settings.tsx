@@ -10,15 +10,14 @@ import {
     Phone,
     ShieldCheck,
     RefreshCcw,
-    Trash2,
     Users
 } from 'lucide-react';
 
 
 export default function Settings() {
-    const [storeName, setStoreName] = useState('Toko Madju Jaya');
-    const [storeAddress, setStoreAddress] = useState('Jl. Merdeka No. 123, Bandung');
-    const [storePhone, setStorePhone] = useState('081234567890');
+    const [storeName] = useState('Toko Madju Jaya');
+    const [storeAddress] = useState('Jl. Merdeka No. 123, Bandung');
+    const [storePhone] = useState('081234567890');
 
     const handleLogout = () => {
         if (confirm('Apakah Anda yakin ingin keluar?')) {
