@@ -2,7 +2,7 @@ import {
     FileText,
     Download,
     ChevronRight,
-    Calendar,
+    Calendar as CalendarIcon,
     CreditCard,
     Banknote,
     Smartphone,
@@ -12,8 +12,11 @@ import {
     Receipt,
     Clock
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { formatCurrency } from '../utils/format';
+import DatePeriodModal from '@/components/filters/DatePeriodModal';
+import type { PeriodType } from '@/utils/date';
+import { getPeriodLabel, filterTransactionsByPeriod } from '@/utils/date';
 
 interface TransactionRecord {
     id: string;
@@ -40,7 +43,7 @@ interface TransactionItem {
 const MOCK_TRANSACTIONS: TransactionRecord[] = [
     {
         id: 'TX-001',
-        created_at: '2026-02-28T14:30:00Z',
+        created_at: new Date().toISOString(),
         total: 156000,
         payment_method: 'CASH',
         items_count: 5,
@@ -56,7 +59,7 @@ const MOCK_TRANSACTIONS: TransactionRecord[] = [
     },
     {
         id: 'TX-002',
-        created_at: '2026-02-28T13:45:00Z',
+        created_at: new Date().toISOString(),
         total: 42000,
         payment_method: 'NON_CASH',
         items_count: 2,
@@ -70,7 +73,7 @@ const MOCK_TRANSACTIONS: TransactionRecord[] = [
     },
     {
         id: 'TX-003',
-        created_at: '2026-02-28T12:15:00Z',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
         total: 850000,
         payment_method: 'KREDIT',
         items_count: 12,
@@ -83,7 +86,7 @@ const MOCK_TRANSACTIONS: TransactionRecord[] = [
     },
     {
         id: 'TX-004',
-        created_at: '2026-02-27T18:20:00Z',
+        created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
         total: 24000,
         payment_method: 'CASH',
         items_count: 1,
@@ -98,6 +101,35 @@ const MOCK_TRANSACTIONS: TransactionRecord[] = [
 
 export default function Reports() {
     const [selectedTx, setSelectedTx] = useState<TransactionRecord | null>(null);
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [selectedPeriod, setSelectedPeriod] = useState<{
+        type: PeriodType;
+        startDate: Date;
+        endDate: Date;
+    }>({
+        type: 'today',
+        startDate: new Date(),
+        endDate: new Date()
+    });
+
+    // Filter transactions based on selected period
+    const filteredTransactions = useMemo(() => {
+        return filterTransactionsByPeriod(MOCK_TRANSACTIONS, selectedPeriod.startDate, selectedPeriod.endDate);
+    }, [selectedPeriod]);
+
+    // Calculate omzet for filtered period
+    const currentOmzet = useMemo(() => {
+        return filteredTransactions.reduce((sum, tx) => sum + tx.total, 0);
+    }, [filteredTransactions]);
+
+    // Calculate profit (assuming 20% margin for mock)
+    const currentProfit = useMemo(() => {
+        return Math.round(currentOmzet * 0.2);
+    }, [currentOmzet]);
+
+    const handlePeriodSelect = (period: PeriodType, startDate: Date, endDate: Date) => {
+        setSelectedPeriod({ type: period, startDate, endDate });
+    };
 
     const getMethodBadge = (method: string) => {
         switch (method) {
@@ -117,14 +149,29 @@ export default function Reports() {
                 </button>
             </div>
 
-            <div className="bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-800 grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                    <div className="text-xs text-slate-500 font-medium">Omzet Periode Ini</div>
-                    <div className="text-lg font-black text-primary">{formatCurrency(12500000)}</div>
+            <div className="bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-800 space-y-4">
+                {/* Period Filter */}
+                <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500 font-medium">Periode</span>
+                    <button
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className="text-primary text-sm font-bold flex items-center gap-1 hover:opacity-80 transition-opacity"
+                    >
+                        <CalendarIcon size={16} />
+                        {getPeriodLabel(selectedPeriod.type, selectedPeriod.startDate, selectedPeriod.endDate)}
+                    </button>
                 </div>
-                <div className="space-y-1 text-right border-l pl-4 border-slate-800">
-                    <div className="text-xs text-slate-500 font-medium">Toko Profit</div>
-                    <div className="text-lg font-black text-white">{formatCurrency(2450000)}</div>
+
+                {/* Omzet & Profit */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <div className="text-xs text-slate-500 font-medium">Omzet Periode Ini</div>
+                        <div className="text-lg font-black text-primary">{formatCurrency(currentOmzet)}</div>
+                    </div>
+                    <div className="space-y-1 text-right border-l pl-4 border-slate-800">
+                        <div className="text-xs text-slate-500 font-medium">Toko Profit</div>
+                        <div className="text-lg font-black text-white">{formatCurrency(currentProfit)}</div>
+                    </div>
                 </div>
             </div>
 
@@ -189,13 +236,16 @@ export default function Reports() {
             <div className="space-y-3">
                 <div className="flex justify-between items-center px-1">
                     <h2 className="font-bold text-slate-300">Riwayat Transaksi</h2>
-                    <button className="text-primary text-sm font-bold flex items-center gap-1">
-                        <Calendar size={16} /> Hari Ini
+                    <button
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className="text-primary text-sm font-bold flex items-center gap-1"
+                    >
+                        <CalendarIcon size={16} /> {getPeriodLabel(selectedPeriod.type, selectedPeriod.startDate, selectedPeriod.endDate)}
                     </button>
                 </div>
 
                 <div className="space-y-3">
-                    {MOCK_TRANSACTIONS.map(tx => (
+                    {filteredTransactions.length > 0 ? filteredTransactions.map(tx => (
                         <div key={tx.id} className="bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-800 hover:border-primary/40 hover:shadow-lg transition-all group">
                             <div className="flex justify-between items-start mb-3">
                                 <div>
@@ -224,7 +274,12 @@ export default function Reports() {
                                 </button>
                             </div>
                         </div>
-                    ))}
+                    )) : (
+                        <div className="bg-[#0f172a] p-8 rounded-xl shadow-sm border border-slate-800 text-center">
+                            <div className="text-slate-500 mb-2">Tidak ada transaksi</div>
+                            <div className="text-slate-600 text-sm">Silakan pilih periode lain</div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -359,6 +414,16 @@ export default function Reports() {
                     </div>
                 </div>
             )}
+
+            {/* Date Period Filter Modal */}
+            <DatePeriodModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                onPeriodSelect={handlePeriodSelect}
+                currentPeriod={selectedPeriod.type}
+                currentStartDate={selectedPeriod.startDate}
+                currentEndDate={selectedPeriod.endDate}
+            />
         </div>
     );
 }
