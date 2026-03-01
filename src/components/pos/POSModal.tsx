@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Trash2, Plus, Minus } from 'lucide-react';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { formatCurrency } from '../../utils/format';
 import { useCartStore } from '../../store/useCartStore';
 import CheckoutFlow from './CheckoutFlow';
@@ -41,6 +42,7 @@ type Step = 'CART' | 'CHECKOUT' | 'RECEIPT';
 
 export default function POSModal({ isOpen, onClose }: POSModalProps) {
     const { items, addItem, updateQty, updateUnit, removeItem, clearCart, getTotal } = useCartStore();
+    const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
 
     const [step, setStep] = useState<Step>('CART');
     const [search, setSearch] = useState('');
@@ -109,12 +111,22 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
         onClose();
     };
 
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+        // Delay for keyboard animation to complete
+        setTimeout(() => {
+            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm transition-opacity">
             <div
-                className={`bg-[#0f172a] h-[95vh] rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 translate-y-0 text-white`}
+                className="bg-[#0f172a] rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 translate-y-0 text-white"
+                style={{
+                    height: keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight}px)` : '95vh',
+                }}
             >
                 <div className="flex items-center justify-between p-6 border-b border-slate-800">
                     <h2 className="text-xl font-black tracking-tight">
@@ -142,6 +154,7 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
                                     className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-primary font-medium text-white placeholder:text-slate-500"
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
+                                    onFocus={handleFocus}
                                 />
                             </div>
 

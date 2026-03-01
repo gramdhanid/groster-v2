@@ -10,6 +10,7 @@ import {
   Package,
 } from "lucide-react";
 
+import { useKeyboardHeight } from "../../hooks/useKeyboardHeight";
 import type { Product, ProductUnit } from "../../types/product";
 import { PRODUCT_CATEGORIES } from "../../types/product";
 
@@ -44,6 +45,8 @@ export default function ProductModal({
       is_default: true,
     },
   ]);
+
+  const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
 
   useEffect(() => {
     if (initialData) {
@@ -159,12 +162,21 @@ export default function ProductModal({
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Delay for keyboard animation to complete
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-      <div className="bg-[#0f172a] h-[95vh] rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 translate-y-0 text-white overflow-hidden">
+      <div
+        className="bg-[#0f172a] rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 translate-y-0 text-white overflow-hidden"
+        style={{
+          height:
+            keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight}px)` : "95vh",
+        }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-800 shrink-0">
           <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
@@ -180,7 +192,10 @@ export default function ProductModal({
         </div>
 
         {/* Form Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-[#020617]">
+        <div
+          className="flex-1 overflow-y-auto p-6 space-y-8 bg-[#020617]"
+          style={{ paddingBottom: keyboardHeight > 0 ? "16px" : "24px" }}
+        >
           {/* Basic Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
