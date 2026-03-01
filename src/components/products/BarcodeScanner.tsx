@@ -47,18 +47,18 @@ export default function BarcodeScanner({
       console.debug("Scanner error:", error);
     };
 
-    scanner
-      .render(onScanSuccess, onScanError)
-      .then(() => {
-        setIsLoading(false);
-      })
-      .catch((err) => {
-        setError(
-          "Gagal mengakses kamera. Pastikan Anda memberikan izin kamera.",
-        );
-        setIsLoading(false);
-        console.error("Scanner error:", err);
-      });
+    try {
+      scanner.render(onScanSuccess, onScanError);
+      setIsLoading(false);
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Gagal mengakses kamera";
+      setError(
+        errorMsg || "Gagal mengakses kamera. Pastikan Anda memberikan izin kamera.",
+      );
+      setIsLoading(false);
+      console.error("Scanner error:", err);
+    }
 
     return () => {
       if (scannerRef.current) {
