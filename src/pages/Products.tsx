@@ -12,6 +12,13 @@ import ProductModal from "../components/products/ProductModal";
 import StockAdjustmentModal from "../components/products/StockAdjustmentModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import SwipeableProductCard from "../components/products/SwipeableProductCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 
 import type { Product } from "../types/product";
 import { PRODUCT_CATEGORIES } from "../types/product";
@@ -127,8 +134,8 @@ export default function ProductList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-white">Daftar Produk</h1>
+      <div className="flex flex-col gap-4 pt-6">
+        <h1 className="text-3xl font-bold text-white">Daftar Produk</h1>
 
         <div className="relative">
           <Search
@@ -145,100 +152,109 @@ export default function ProductList() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="p-2.5 bg-slate-800 border border-slate-700 rounded-lg text-sm font-bold text-slate-300 outline-none focus:ring-2 focus:ring-primary min-w-[150px]"
-          >
-            <option value="ALL">Semua Kategori</option>
-            {PRODUCT_CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Pilih Kategori" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">Semua Kategori</SelectItem>
+              {PRODUCT_CATEGORIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {filteredProducts.map((product) => (
-          <SwipeableProductCard
-            key={product.id}
-            onDelete={() => handleDeleteClick(product.id)}
-          >
-            <div className="bg-[#0f172a] p-4 shadow-sm border border-slate-800 flex flex-col gap-3 h-full">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-lg text-white">
-                    {product.name}
-                  </h3>
-                  <span className="text-xs font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
-                    {product.category}
-                  </span>
-                </div>
-                <div
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                    product.stock_qty < 10
-                      ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                      : product.stock_qty < 50
-                        ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
-                        : "bg-green-500/10 text-green-400 border border-green-500/20"
-                  }`}
-                >
-                  {product.stock_qty < 10 && <AlertCircle size={14} />}
-                  Stok: {product.stock_qty}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {product.units.map((unit) => (
-                  <div
-                    key={unit.id}
-                    className="flex justify-between items-center text-sm p-2 bg-slate-800/50 rounded-lg border border-slate-800"
-                  >
-                    <span className="font-medium text-slate-300">
-                      {unit.unit_type}{" "}
-                      {unit.is_default && (
-                        <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-1">
-                          Default
-                        </span>
-                      )}
+        {filteredProducts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Package className="w-16 h-16 text-slate-500 mb-4" />
+            <h3 className="text-lg font-semibold text-slate-400 mb-2">
+              Tidak ada produk
+            </h3>
+            <p className="text-sm text-slate-500">
+              {search || categoryFilter !== "ALL"
+                ? "Tidak ada produk yang sesuai dengan pencarian atau filter Anda."
+                : "Mulai dengan menambahkan produk baru."}
+            </p>
+          </div>
+        ) : (
+          filteredProducts.map((product) => (
+            <SwipeableProductCard
+              key={product.id}
+              onDelete={() => handleDeleteClick(product.id)}
+            >
+              <div className="bg-[#0f172a] p-4 shadow-sm border border-slate-800 flex flex-col gap-3 h-full">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-lg text-white">
+                      {product.name}
+                    </h3>
+                    <span className="text-xs font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
+                      {product.category}
                     </span>
-                    <div className="text-right">
-                      <div className="font-bold text-white">
-                        {formatCurrency(unit.price_sell)}
-                      </div>
-                      <div className="text-[10px] text-slate-500">
-                        Modal: {formatCurrency(unit.price_cost)}
+                  </div>
+                  <div
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                      product.stock_qty < 10
+                        ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                        : product.stock_qty < 50
+                          ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
+                          : "bg-green-500/10 text-green-400 border border-green-500/20"
+                    }`}
+                  >
+                    {product.stock_qty < 10 && <AlertCircle size={14} />}
+                    Stok: {product.stock_qty}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {product.units.map((unit) => (
+                    <div
+                      key={unit.id}
+                      className="flex justify-between items-center text-sm p-2 bg-slate-800/50 rounded-lg border border-slate-800"
+                    >
+                      <span className="font-medium text-slate-300">
+                        {unit.unit_type}{" "}
+                        {unit.is_default && (
+                          <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-1">
+                            Default
+                          </span>
+                        )}
+                      </span>
+                      <div className="text-right">
+                        <div className="font-bold text-white">
+                          {formatCurrency(unit.price_sell)}
+                        </div>
+                        <div className="text-[10px] text-slate-500">
+                          Modal: {formatCurrency(unit.price_cost)}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div className="flex gap-2 mt-2 pt-3 border-t border-slate-800">
-                <button
-                  onClick={() => handleOpenEdit(product)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold text-slate-400 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
-                >
-                  <Edit2 size={16} /> Edit
-                </button>
-                <button
-                  onClick={() => handleOpenStock(product)}
-                  className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-lg border border-primary/20 transition-colors"
-                >
-                  <Package size={16} /> Stok
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(product.id)}
-                  className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg border border-red-500/20 transition-colors"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className="flex gap-2 mt-2 pt-3 border-t border-slate-800">
+                  <button
+                    onClick={() => handleOpenEdit(product)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold text-slate-400 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
+                  >
+                    <Edit2 size={16} /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleOpenStock(product)}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-lg border border-primary/20 transition-colors"
+                  >
+                    <Package size={16} /> Stok
+                  </button>
+                </div>
               </div>
-            </div>
-          </SwipeableProductCard>
-        ))}
+            </SwipeableProductCard>
+          ))
+        )}
       </div>
 
       <button
