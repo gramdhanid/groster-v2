@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Package, Plus, Minus, CheckCircle, AlertCircle, Layers } from 'lucide-react';
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 interface ProductUnit {
     id: string;
@@ -24,12 +25,15 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
     const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null);
     const [reason, setReason] = useState('Stok Masuk');
     const [finalStock, setFinalStock] = useState(0);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     useEffect(() => {
         if (product && product.units.length > 0) {
             setFinalStock(product.stock_qty);
             setAdjustment(0);
             setSelectedUnit(product.units[0]); // Default to first unit (usually base)
+            setHasUnsavedChanges(false);
         }
     }, [product, isOpen]);
 
@@ -51,9 +55,28 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
         return num.toLocaleString('id-ID');
     };
 
+    const handleClose = () => {
+        if (hasUnsavedChanges) {
+            setShowConfirm(true);
+        } else {
+            onClose();
+        }
+    };
+
+    const handleConfirmClose = () => {
+        setShowConfirm(false);
+        setHasUnsavedChanges(false);
+        onClose();
+    };
+
+    const handleCancelConfirm = () => {
+        setShowConfirm(false);
+    };
+
     const totalImpact = selectedUnit ? adjustment * selectedUnit.qty_per_base_unit : 0;
 
     return (
+        <>
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div className="bg-[#0f172a] w-full max-w-md rounded-3xl shadow-2xl border border-slate-800 overflow-hidden text-white flex flex-col">
                 <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-[#0f172a]">
@@ -66,7 +89,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                             <p className="text-xs text-slate-400 font-bold truncate max-w-[200px]">{product.name}</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
+                    <button onClick={handleClose} className="p-2 text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
                         <X size={24} />
                     </button>
                 </div>
@@ -99,7 +122,10 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                             {product.units.map(unit => (
                                 <button
                                     key={unit.id}
-                                    onClick={() => setSelectedUnit(unit)}
+                                    onClick={() => {
+                                        setSelectedUnit(unit);
+                                        setHasUnsavedChanges(true);
+                                    }}
                                     className={`p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${selectedUnit?.id === unit.id
                                         ? 'border-primary bg-primary/10 text-white'
                                         : 'border-slate-800 bg-slate-900/50 text-slate-400 hover:border-slate-700'
@@ -147,7 +173,10 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                             </div> */}
                             <div className="grid grid-cols-3 gap-3">
                                 <button
-                                    onClick={() => setAdjustment(prev => prev - 1)}
+                                    onClick={() => {
+                                        setAdjustment(prev => prev - 1);
+                                        setHasUnsavedChanges(true);
+                                    }}
                                     className="h-14 rounded-2xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 active:scale-90 transition-transform"
                                 >
                                     <Minus size={24} strokeWidth={3} />
@@ -155,12 +184,18 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                                 <input
                                     type="number"
                                     value={adjustment === 0 ? '' : adjustment}
-                                    onChange={(e) => setAdjustment(Number(e.target.value))}
+                                    onChange={(e) => {
+                                        setAdjustment(Number(e.target.value));
+                                        setHasUnsavedChanges(true);
+                                    }}
                                     placeholder="0"
                                     className="h-14 bg-slate-800/50 border border-slate-700 rounded-2xl text-center text-xl font-black outline-none focus:ring-2 focus:ring-primary shadow-inner [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 />
                                 <button
-                                    onClick={() => setAdjustment(prev => prev + 1)}
+                                    onClick={() => {
+                                        setAdjustment(prev => prev + 1);
+                                        setHasUnsavedChanges(true);
+                                    }}
                                     className="h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary active:scale-90 transition-transform"
                                 >
                                     <Plus size={24} strokeWidth={3} />
@@ -176,6 +211,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                                         key={r}
                                         onClick={() => {
                                             setReason(r);
+                                            setHasUnsavedChanges(true);
                                             if (r === 'Stok Keluar' || r === 'Rusak') {
                                                 if (adjustment > 0) setAdjustment(prev => -prev);
                                             } else if (r === 'Stok Masuk') {
@@ -223,5 +259,17 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                 </div>
             </div>
         </div>
+
+        <ConfirmDialog
+            isOpen={showConfirm}
+            onClose={handleCancelConfirm}
+            onConfirm={handleConfirmClose}
+            title="Batalkan Perubahan?"
+            message="Anda memiliki perubahan stok yang belum disimpan."
+            confirmText="Ya, Tutup"
+            cancelText="Batal"
+            variant="warning"
+        />
+    </>
     );
 }

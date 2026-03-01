@@ -12,23 +12,34 @@ import {
     RefreshCcw,
     Users
 } from 'lucide-react';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
 
 
 export default function Settings() {
     const [storeName] = useState('Toko Madju Jaya');
     const [storeAddress] = useState('Jl. Merdeka No. 123, Bandung');
     const [storePhone] = useState('081234567890');
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [showClearDataConfirm, setShowClearDataConfirm] = useState(false);
 
-    const handleLogout = () => {
-        if (confirm('Apakah Anda yakin ingin keluar?')) {
-            alert('Logout berhasil!');
-        }
+    const handleLogoutClick = () => {
+        setShowLogoutConfirm(true);
     };
 
-    const clearLocalData = () => {
-        if (confirm('Ini akan menghapus data offline lokal. Data di server tetap aman. Lanjutkan?')) {
-            alert('Data lokal dibersihkan.');
-        }
+    const handleConfirmLogout = () => {
+        setShowLogoutConfirm(false);
+        alert('Logout berhasil!');
+        // Actual logout logic here
+    };
+
+    const handleClearDataClick = () => {
+        setShowClearDataConfirm(true);
+    };
+
+    const handleConfirmClearData = () => {
+        setShowClearDataConfirm(false);
+        alert('Data lokal dibersihkan.');
+        // Actual clear data logic here
     };
 
     return (
@@ -96,7 +107,7 @@ export default function Settings() {
                             </div>
                             <ChevronRight size={20} className="text-slate-700" />
                         </div>
-                        <div className="flex items-center gap-4 p-4 active:bg-slate-800 transition-colors cursor-pointer border-b border-slate-800 group" onClick={clearLocalData}>
+                        <div className="flex items-center gap-4 p-4 active:bg-slate-800 transition-colors cursor-pointer border-b border-slate-800 group" onClick={handleClearDataClick}>
                             <div className="bg-red-500/10 p-2.5 rounded-xl text-red-400 group-hover:bg-red-600 group-hover:text-white transition-all">
                                 <RefreshCcw size={20} />
                             </div>
@@ -128,7 +139,7 @@ export default function Settings() {
                             <div className="text-sm font-bold text-slate-200">kasir@tokomadju.com</div>
                         </div>
                         <button
-                            onClick={handleLogout}
+                            onClick={handleLogoutClick}
                             className="w-full flex items-center gap-4 p-4 active:bg-red-500/10 text-red-400 transition-colors cursor-pointer font-bold"
                         >
                             <LogOut size={20} />
@@ -143,6 +154,28 @@ export default function Settings() {
                     <div className="text-[10px] text-slate-700 font-medium italic">Handcrafted for Warung Indonesia</div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={showLogoutConfirm}
+                onClose={() => setShowLogoutConfirm(false)}
+                onConfirm={handleConfirmLogout}
+                title="Keluar dari Aplikasi?"
+                message="Apakah Anda yakin ingin keluar?"
+                confirmText="Ya, Keluar"
+                cancelText="Batal"
+                variant="warning"
+            />
+
+            <ConfirmDialog
+                isOpen={showClearDataConfirm}
+                onClose={() => setShowClearDataConfirm(false)}
+                onConfirm={handleConfirmClearData}
+                title="Reset Data Offline?"
+                message="Ini akan menghapus data offline lokal. Data di server tetap aman. Lanjutkan?"
+                confirmText="Ya, Reset"
+                cancelText="Batal"
+                variant="danger"
+            />
         </div>
     );
 }

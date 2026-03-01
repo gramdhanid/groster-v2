@@ -5,6 +5,7 @@ import { formatCurrency } from '../../utils/format';
 import { useCartStore } from '../../store/useCartStore';
 import CheckoutFlow from './CheckoutFlow';
 import ReceiptPreview from './ReceiptPreview';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 interface POSModalProps {
     isOpen: boolean;
@@ -49,6 +50,7 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
     const [selectedCategory, setSelectedCategory] = useState('Semua');
     const [searchResults, setSearchResults] = useState<typeof MOCK_PRODUCTS>([]);
     const [lastTransaction, setLastTransaction] = useState<any>(null);
+    const [showConfirm, setShowConfirm] = useState(false);
 
     useEffect(() => {
         const q = search.toLowerCase();
@@ -69,16 +71,23 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
 
     const handleClose = () => {
         if (items.length > 0 && step !== 'RECEIPT') {
-            if (confirm('Keranjang belum kosong. Yakin ingin menutup?')) {
-                clearCart();
-                setStep('CART');
-                onClose();
-            }
+            setShowConfirm(true);
         } else {
             clearCart();
             setStep('CART');
             onClose();
         }
+    };
+
+    const handleConfirmClose = () => {
+        setShowConfirm(false);
+        clearCart();
+        setStep('CART');
+        onClose();
+    };
+
+    const handleCancelConfirm = () => {
+        setShowConfirm(false);
     };
 
     const handleCheckoutComplete = (paymentMethod: string, paidAmount: number, customerId?: string, customerName?: string) => {
@@ -121,6 +130,7 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
     if (!isOpen) return null;
 
     return (
+        <>
         <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm transition-opacity">
             <div
                 className="bg-[#0f172a] rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 translate-y-0 text-white"
@@ -310,5 +320,17 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
 
             </div>
         </div>
+
+        <ConfirmDialog
+            isOpen={showConfirm}
+            onClose={handleCancelConfirm}
+            onConfirm={handleConfirmClose}
+            title="Tutup Transaksi?"
+            message="Keranjang belum kosong. Yakin ingin menutup dan menghapus semua item?"
+            confirmText="Ya, Tutup"
+            cancelText="Batal"
+            variant="warning"
+        />
+        </>
     );
 }

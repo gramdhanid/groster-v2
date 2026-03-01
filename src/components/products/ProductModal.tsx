@@ -48,6 +48,9 @@ export default function ProductModal({
   ]);
   const [showConfirm, setShowConfirm] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showCategoryWarning, setShowCategoryWarning] = useState(false);
+  const [suggestedCategory, setSuggestedCategory] = useState<string>('');
+  const [pendingCategory, setPendingCategory] = useState<string>('');
 
   const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
 
@@ -141,16 +144,17 @@ export default function ProductModal({
         (c) => c.toLowerCase() === trimmed.toLowerCase(),
       );
       if (similar && similar !== finalCategory) {
-        if (
-          confirm(
-            `Kategori "${finalCategory}" mirip dengan kategori yang sudah ada: "${similar}". Gunakan "${similar}" saja?`,
-          )
-        ) {
-          finalCategory = similar;
-        }
+        setSuggestedCategory(similar);
+        setPendingCategory(finalCategory);
+        setShowCategoryWarning(true);
+        return; // Stop here, wait for dialog
       }
     }
+    // Continue if no warning
+    completeSaveProduct(finalCategory);
+  };
 
+  const completeSaveProduct = (finalCategory: string) => {
     onSave({
       id: initialData?.id || crypto.randomUUID(),
       name,
@@ -160,6 +164,18 @@ export default function ProductModal({
       units,
     });
     onClose();
+  };
+
+  const handleCategoryWarningConfirm = () => {
+    setShowCategoryWarning(false);
+    // Proceed with suggested category
+    completeSaveProduct(suggestedCategory);
+  };
+
+  const handleCategoryWarningCancel = () => {
+    setShowCategoryWarning(false);
+    // Proceed with original input
+    completeSaveProduct(pendingCategory);
   };
 
   const formatNumber = (num: number) => {
@@ -494,6 +510,18 @@ export default function ProductModal({
         confirmText="Ya, Tutup"
         cancelText="Batal"
         variant="warning"
+      />
+
+      {/* Category Similarity Warning Dialog */}
+      <ConfirmDialog
+        isOpen={showCategoryWarning}
+        onClose={handleCategoryWarningCancel}
+        onConfirm={handleCategoryWarningConfirm}
+        title="Kategori Mirip Ditemukan"
+        message={`Kategori "${pendingCategory}" mirip dengan kategori yang sudah ada: "${suggestedCategory}". Gunakan "${suggestedCategory}" saja?`}
+        confirmText="Ya, Gunakan"
+        cancelText="Tetap Pakai Input"
+        variant="info"
       />
     </div>
   );
