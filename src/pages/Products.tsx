@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  Search,
-  Plus,
-  Edit2,
-  Trash2,
-  Package,
-  AlertCircle,
-} from "lucide-react";
+import { Search, Plus, Edit2, Package, AlertCircle } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import ProductModal from "../components/products/ProductModal";
 import StockAdjustmentModal from "../components/products/StockAdjustmentModal";
