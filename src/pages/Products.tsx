@@ -1,10 +1,18 @@
 import { useState } from "react";
-import { Search, Plus, Edit2, Package, AlertCircle } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit2,
+  Package,
+  AlertCircle,
+  Camera,
+} from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import ProductModal from "../components/products/ProductModal";
 import StockAdjustmentModal from "../components/products/StockAdjustmentModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import SwipeableProductCard from "../components/products/SwipeableProductCard";
+import BarcodeScanner from "../components/products/BarcodeScanner";
 import {
   Select,
   SelectContent,
@@ -70,6 +78,7 @@ export default function ProductList() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
@@ -125,6 +134,10 @@ export default function ProductList() {
     setIsProductModalOpen(true);
   };
 
+  const handleBarcodeScan = (barcode: string) => {
+    setSearch(barcode);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 pt-6">
@@ -138,10 +151,17 @@ export default function ProductList() {
           <input
             type="text"
             placeholder="Cari nama atau barcode..."
-            className="w-full pl-10 pr-4 py-3 bg-[#0f172a] border border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm text-white placeholder:text-slate-500"
+            className="w-full pl-10 pr-12 py-3 bg-[#0f172a] border border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm text-white placeholder:text-slate-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
+            title="Scan barcode dengan kamera"
+          >
+            <Camera size={20} />
+          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -280,6 +300,12 @@ export default function ProductList() {
         confirmText="Ya, Hapus"
         cancelText="Batal"
         variant="danger"
+      />
+
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleBarcodeScan}
       />
     </div>
   );
