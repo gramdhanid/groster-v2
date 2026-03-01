@@ -13,6 +13,7 @@ import {
 import { useKeyboardHeight } from "../../hooks/useKeyboardHeight";
 import type { Product, ProductUnit } from "../../types/product";
 import { PRODUCT_CATEGORIES } from "../../types/product";
+import ConfirmDialog from "../ui/ConfirmDialog";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -45,6 +46,8 @@ export default function ProductModal({
       is_default: true,
     },
   ]);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
 
@@ -83,6 +86,7 @@ export default function ProductModal({
         },
       ]);
     }
+    setHasUnsavedChanges(false);
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
@@ -99,16 +103,19 @@ export default function ProductModal({
         is_default: false,
       },
     ]);
+    setHasUnsavedChanges(true);
   };
 
   const handleRemoveUnit = (id: string) => {
     if (units.length > 1) {
       setUnits(units.filter((u) => u.id !== id));
+      setHasUnsavedChanges(true);
     }
   };
 
   const updateUnit = (id: string, field: keyof ProductUnit, value: any) => {
     setUnits(units.map((u) => (u.id === id ? { ...u, [field]: value } : u)));
+    setHasUnsavedChanges(true);
   };
 
   const handleSave = () => {
@@ -116,6 +123,8 @@ export default function ProductModal({
       alert("Mohon lengkapi semua data produk");
       return;
     }
+
+    setHasUnsavedChanges(false);
 
     let finalCategory = category;
     if (isCustom) {
@@ -168,6 +177,24 @@ export default function ProductModal({
     }, 300);
   };
 
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowConfirm(false);
+    setHasUnsavedChanges(false);
+    onClose();
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirm(false);
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm transition-opacity">
       <div
@@ -184,7 +211,7 @@ export default function ProductModal({
             {initialData ? "Edit Produk" : "Tambah Produk Baru"}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 -mr-2 text-slate-400 hover:bg-slate-800 rounded-full transition-colors"
           >
             <X size={24} />
@@ -211,7 +238,10 @@ export default function ProductModal({
                   type="text"
                   value={name}
                   onFocus={handleFocus}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setHasUnsavedChanges(true);
+                  }}
                   placeholder="Contoh: Indomie Goreng"
                   className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-lg"
                 />
@@ -227,6 +257,7 @@ export default function ProductModal({
                     const val = e.target.value;
                     setCategory(val);
                     setIsCustom(val === "NEW");
+                    setHasUnsavedChanges(true);
                   }}
                   className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold appearance-none"
                 >
@@ -247,7 +278,10 @@ export default function ProductModal({
                     <input
                       type="text"
                       value={customCategory}
-                      onChange={(e) => setCustomCategory(e.target.value)}
+                      onChange={(e) => {
+                        setCustomCategory(e.target.value);
+                        setHasUnsavedChanges(true);
+                      }}
                       placeholder="Ketik nama kategori baru..."
                       className="w-full bg-primary/5 border border-primary/20 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold placeholder:text-slate-600 border-dashed"
                       autoFocus
@@ -268,7 +302,10 @@ export default function ProductModal({
                     type="text"
                     value={barcode}
                     onFocus={handleFocus}
-                    onChange={(e) => setBarcode(e.target.value)}
+                    onChange={(e) => {
+                      setBarcode(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
                     placeholder="(Opsional)"
                     className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
                   />
@@ -289,7 +326,10 @@ export default function ProductModal({
                     inputMode="numeric"
                     onFocus={handleFocus}
                     value={formatNumber(stockQty)}
-                    onChange={(e) => setStockQty(parseNumber(e.target.value))}
+                    onChange={(e) => {
+                      setStockQty(parseNumber(e.target.value));
+                      setHasUnsavedChanges(true);
+                    }}
                     placeholder="0"
                     className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-lg"
                   />
@@ -443,6 +483,18 @@ export default function ProductModal({
           </button>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={handleCancelConfirm}
+        onConfirm={handleConfirmClose}
+        title="Batalkan Perubahan?"
+        message="Anda memiliki perubahan yang belum disimpan. Apakah Anda yakin ingin menutup formulir ini?"
+        confirmText="Ya, Tutup"
+        cancelText="Batal"
+        variant="warning"
+      />
     </div>
   );
 }
