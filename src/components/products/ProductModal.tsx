@@ -6,6 +6,7 @@ import {
   Tag,
   Boxes,
   Barcode,
+  Camera,
   DollarSign,
   Package,
 } from "lucide-react";
@@ -14,6 +15,7 @@ import { useKeyboardHeight } from "../../hooks/useKeyboardHeight";
 import type { Product, ProductUnit } from "../../types/product";
 import { PRODUCT_CATEGORIES } from "../../types/product";
 import ConfirmDialog from "../ui/ConfirmDialog";
+import BarcodeScanner from "./BarcodeScanner";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -51,6 +53,7 @@ export default function ProductModal({
   const [showCategoryWarning, setShowCategoryWarning] = useState(false);
   const [suggestedCategory, setSuggestedCategory] = useState<string>('');
   const [pendingCategory, setPendingCategory] = useState<string>('');
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
 
@@ -224,7 +227,7 @@ export default function ProductModal({
         <div className="flex items-center justify-between p-6 border-b border-slate-800 shrink-0">
           <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
             <Package className="text-primary" size={24} />
-            {initialData ? "Edit Produk" : "Tambah Produk Baru"}
+            {initialData?.name ? "Edit Produk" : "Tambah Produk Baru"}
           </h2>
           <button
             onClick={handleClose}
@@ -322,9 +325,17 @@ export default function ProductModal({
                       setBarcode(e.target.value);
                       setHasUnsavedChanges(true);
                     }}
-                    placeholder="(Opsional)"
-                    className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
+                    placeholder="Scan atau ketik manual"
+                    className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 pr-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setIsScannerOpen(true)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors"
+                    title="Scan barcode dengan kamera"
+                  >
+                    <Camera size={18} />
+                  </button>
                 </div>
               </div>
 
@@ -522,6 +533,16 @@ export default function ProductModal({
         confirmText="Ya, Gunakan"
         cancelText="Tetap Pakai Input"
         variant="info"
+      />
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={(scannedBarcode) => {
+          setBarcode(scannedBarcode);
+          setHasUnsavedChanges(true);
+        }}
       />
     </div>
   );

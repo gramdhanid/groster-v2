@@ -80,6 +80,10 @@ export default function ProductList() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
+  // Barcode not found dialog states
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
+  const [showAddProductDialog, setShowAddProductDialog] = useState(false);
+
   // Request camera permission before opening scanner modal
   const handleOpenScanner = async () => {
     try {
@@ -161,7 +165,52 @@ export default function ProductList() {
   };
 
   const handleBarcodeScan = (barcode: string) => {
-    setSearch(barcode);
+    // Check if product with this barcode exists
+    const existingProduct = products.find((p) => p.barcode === barcode);
+
+    if (existingProduct) {
+      // Product found - just show it in search
+      setSearch(barcode);
+    } else {
+      // Product not found - show dialog to add new product
+      setScannedBarcode(barcode);
+      setShowAddProductDialog(true);
+    }
+  };
+
+  const handleAddProductFromBarcode = () => {
+    // Close dialog and open ProductModal with pre-filled barcode
+    setShowAddProductDialog(false);
+
+    // Create a partial product object with barcode only
+    // ProductModal will fill in default values for missing fields
+    const partialProduct: Product = {
+      id: crypto.randomUUID(),
+      name: "",
+      category: PRODUCT_CATEGORIES[0],
+      barcode: scannedBarcode || "",
+      stock_qty: 0,
+      units: [
+        {
+          id: crypto.randomUUID(),
+          unit_type: "Pcs",
+          price_sell: 0,
+          price_cost: 0,
+          qty_per_base_unit: 1,
+          is_default: true,
+        },
+      ],
+    };
+
+    setSelectedProduct(partialProduct);
+    setIsProductModalOpen(true);
+  };
+
+  const handleCancelAddProduct = () => {
+    // Just show the barcode in search for manual lookup
+    setShowAddProductDialog(false);
+    setSearch(scannedBarcode || "");
+    setScannedBarcode(null);
   };
 
   return (
@@ -305,7 +354,11 @@ export default function ProductList() {
 
       <ProductModal
         isOpen={isProductModalOpen}
-        onClose={() => setIsProductModalOpen(false)}
+        onClose={() => {
+          setIsProductModalOpen(false);
+          setSelectedProduct(null);
+          setScannedBarcode(null);
+        }}
         onSave={handleSaveProduct}
         initialData={selectedProduct}
       />
@@ -326,6 +379,17 @@ export default function ProductList() {
         confirmText="Ya, Hapus"
         cancelText="Batal"
         variant="danger"
+      />
+
+      <ConfirmDialog
+        isOpen={showAddProductDialog}
+        onClose={handleCancelAddProduct}
+        onConfirm={handleAddProductFromBarcode}
+        title="Barcode Tidak Ditemukan"
+        message={`Produk dengan barcode "${scannedBarcode || ""}" belum ada. Apakah Anda ingin menambahkan produk baru?`}
+        confirmText="+ Tambah Produk"
+        cancelText="Cari Manual"
+        variant="info"
       />
 
       <BarcodeScanner
