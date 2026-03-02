@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 import {
   X,
   Plus,
@@ -166,6 +167,14 @@ export default function ProductModal({
       stock_qty: stockQty,
       units,
     });
+
+    // Show success toast
+    if (initialData?.name) {
+      toast.success(`Produk "${name}" berhasil diperbarui!`);
+    } else {
+      toast.success(`Produk "${name}" berhasil ditambahkan!`);
+    }
+
     onClose();
   };
 
