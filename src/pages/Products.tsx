@@ -80,6 +80,32 @@ export default function ProductList() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
+  // Request camera permission before opening scanner modal
+  const handleOpenScanner = async () => {
+    try {
+      // Check if mediaDevices API is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("Camera API not available");
+        setIsScannerOpen(true);
+        return;
+      }
+
+      // Pre-request camera permission to trigger prompt
+      // This ensures permission is granted before scanner initializes
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+      // Immediately stop the stream - we just needed the permission
+      stream.getTracks().forEach((track) => track.stop());
+
+      // Now open the scanner
+      setIsScannerOpen(true);
+    } catch (err) {
+      // If permission denied or error, still open scanner to show error message
+      console.debug("Camera permission check:", err);
+      setIsScannerOpen(true);
+    }
+  };
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -156,7 +182,7 @@ export default function ProductList() {
             onChange={(e) => setSearch(e.target.value)}
           />
           <button
-            onClick={() => setIsScannerOpen(true)}
+            onClick={handleOpenScanner}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
             title="Scan barcode dengan kamera"
           >
