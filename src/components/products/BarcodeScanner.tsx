@@ -33,6 +33,11 @@ interface BarcodeScannerProps {
 // Scanner instance ID - must be unique
 const SCANNER_ID = "barcode-scanner";
 
+// Detect if mobile device for performance optimization
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+// Skip frames on mobile to reduce CPU usage (scan every 3rd frame)
+const FRAME_SKIP = isMobile ? 3 : 1;
+
 export default function BarcodeScanner({
   isOpen,
   onClose,
@@ -46,12 +51,13 @@ export default function BarcodeScanner({
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const requestAnimationFrameRef = useRef<number | null>(null);
+  const frameCountRef = useRef(0); // Track frames for skipping
 
   // Native Barcode Detector API ref
   const barcodeDetectorRef = useRef<BarcodeDetector | null>(null);
-  const useNativeApiRef = useRef(false); // Use ref instead of state to avoid re-renders
+  const useNativeApiRef = useRef(false);
 
-  // Guards against double-initialization (React StrictMode)
+  // Guards against double-initialization
   const isInitializedRef = useRef(false);
   const isScanningRef = useRef(false);
 
@@ -60,7 +66,7 @@ export default function BarcodeScanner({
   const [cameraActive, setCameraActive] = useState(false);
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
-  const [usingNativeApi, setUsingNativeApi] = useState(false); // Just for display
+  const [usingNativeApi, setUsingNativeApi] = useState(false);
 
   // Callback refs for scan functions (stable across re-renders)
   const onScanRef = useRef(onScan);
@@ -75,26 +81,23 @@ export default function BarcodeScanner({
   // Cleanup function
   const cleanupScanner = useCallback(() => {
     isScanningRef.current = false;
+    frameCountRef.current = 0;
 
-    // Cancel any pending animation frame
     if (requestAnimationFrameRef.current !== null) {
       cancelAnimationFrame(requestAnimationFrameRef.current);
       requestAnimationFrameRef.current = null;
     }
 
-    // Stop video tracks
     if (streamRef.current) {
       const tracks = streamRef.current.getTracks();
       tracks.forEach((track) => track.stop());
       streamRef.current = null;
     }
 
-    // Clear video element
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
 
-    // Clear ZXing reader
     if (readerRef.current) {
       try {
         readerRef.current.reset();
@@ -104,7 +107,6 @@ export default function BarcodeScanner({
       readerRef.current = null;
     }
 
-    // Clear native detector
     barcodeDetectorRef.current = null;
     useNativeApiRef.current = false;
 
@@ -133,9 +135,19 @@ export default function BarcodeScanner({
     }
   }, [torchOn]);
 
-  // Scan using Native Barcode Detection API
+  // Scan using Native Barcode Detection API (with frame skip for mobile)
   const scanWithNativeAPI = useCallback((video: HTMLVideoElement) => {
     if (!isScanningRef.current || !barcodeDetectorRef.current) return;
+
+    frameCountRef.current++;
+
+    // Skip frames on mobile for performance
+    if (frameCountRef.current % FRAME_SKIP !== 0) {
+      requestAnimationFrameRef.current = requestAnimationFrame(() =>
+        scanWithNativeAPI(video),
+      );
+      return;
+    }
 
     barcodeDetectorRef.current
       .detect(video)
@@ -150,24 +162,31 @@ export default function BarcodeScanner({
             return;
           }
         }
-        // Continue scanning
         requestAnimationFrameRef.current = requestAnimationFrame(() =>
           scanWithNativeAPI(video),
         );
       })
       .catch(() => {
-        // Native API might fail silently, continue scanning
         requestAnimationFrameRef.current = requestAnimationFrame(() =>
           scanWithNativeAPI(video),
         );
       });
   }, [cleanupScanner]);
 
-  // Scan using ZXing library
+  // Scan using ZXing library (with frame skip for mobile)
   const scanWithZXing = useCallback((video: HTMLVideoElement) => {
     if (!isScanningRef.current || !readerRef.current) return;
 
-    // Only scan if video is ready and playing
+    frameCountRef.current++;
+
+    // Skip frames on mobile for performance
+    if (frameCountRef.current % FRAME_SKIP !== 0) {
+      requestAnimationFrameRef.current = requestAnimationFrame(() =>
+        scanWithZXing(video),
+      );
+      return;
+    }
+
     if (
       video.readyState === video.HAVE_ENOUGH_DATA &&
       !video.paused &&
@@ -183,23 +202,19 @@ export default function BarcodeScanner({
             onCloseRef.current();
             return;
           }
-          // Continue scanning
           requestAnimationFrameRef.current = requestAnimationFrame(() =>
             scanWithZXing(video),
           );
         })
         .catch((err) => {
-          // NotFoundException is normal - no barcode found yet
           if (!(err instanceof NotFoundException)) {
             console.debug("ZXing scan error:", err);
           }
-          // Continue scanning
           requestAnimationFrameRef.current = requestAnimationFrame(() =>
             scanWithZXing(video),
           );
         });
     } else {
-      // Video not ready, try again
       requestAnimationFrameRef.current = requestAnimationFrame(() =>
         scanWithZXing(video),
       );
@@ -228,6 +243,7 @@ export default function BarcodeScanner({
 
       isInitializedRef.current = true;
       isScanningRef.current = true;
+      frameCountRef.current = 0;
 
       try {
         // Check if Native Barcode Detection API is available
@@ -285,34 +301,32 @@ export default function BarcodeScanner({
             d.label.toLowerCase().includes("rear")
           ) || videoDevices[0];
 
-        // Request camera stream with torch capability
+        // Lower resolution on mobile for better performance
+        const resolution = isMobile
+          ? { width: { ideal: 640 }, height: { ideal: 480 } }
+          : { width: { ideal: 1280 }, height: { ideal: 720 } };
+
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             deviceId: { ideal: backCamera.deviceId },
             facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            ...resolution,
           },
         });
 
         streamRef.current = stream;
-
-        // Torch support is device-dependent
         setTorchAvailable(true);
 
-        // Set video source
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.setAttribute("playsinline", "true");
 
-          // Wait for video to be ready and play
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play().then(() => {
               setCameraActive(true);
               setIsLoading(false);
               setError(null);
 
-              // Start scanning loop - check which method to use
               if (useNativeApiRef.current && barcodeDetectorRef.current) {
                 scanWithNativeAPI(videoRef.current!);
               } else {
@@ -417,7 +431,7 @@ export default function BarcodeScanner({
           <div
             ref={containerRef}
             id={SCANNER_ID}
-            className="w-full rounded-lg overflow-hidden bg-slate-800 min-h-[200px]"
+            className="w-full rounded-lg overflow-hidden bg-slate-800 aspect-video max-h-64"
           >
             <video
               ref={videoRef}
@@ -477,6 +491,13 @@ export default function BarcodeScanner({
             <li>Input manual melalui kolom pencarian</li>
           </ul>
         </div>
+
+        {/* Debug info - show if mobile optimization is active */}
+        {cameraActive && isMobile && import.meta.env.DEV && (
+          <div className="mt-2 text-xs text-amber-400 text-center">
+            Mobile optimization active (lower resolution, frame skipping)
+          </div>
+        )}
       </div>
     </div>
   );
