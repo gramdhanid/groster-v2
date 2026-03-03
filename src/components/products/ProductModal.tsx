@@ -52,8 +52,8 @@ export default function ProductModal({
   const [showConfirm, setShowConfirm] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCategoryWarning, setShowCategoryWarning] = useState(false);
-  const [suggestedCategory, setSuggestedCategory] = useState<string>('');
-  const [pendingCategory, setPendingCategory] = useState<string>('');
+  const [suggestedCategory, setSuggestedCategory] = useState<string>("");
+  const [pendingCategory, setPendingCategory] = useState<string>("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });

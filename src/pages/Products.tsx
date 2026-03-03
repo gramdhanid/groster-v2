@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Search,
   Plus,
@@ -6,6 +6,7 @@ import {
   Package,
   AlertCircle,
   Camera,
+  Filter,
 } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import ProductModal from "../components/products/ProductModal";
@@ -13,16 +14,11 @@ import StockAdjustmentModal from "../components/products/StockAdjustmentModal";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
 import SwipeableProductCard from "../components/products/SwipeableProductCard";
 import BarcodeScanner from "../components/products/BarcodeScanner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+import ProductFilterModal from "../components/filters/ProductFilterModal";
 
 import type { Product } from "../types/product";
 import { PRODUCT_CATEGORIES } from "../types/product";
+import type { ProductFilters } from "../types/filter";
 
 const INITIAL_PRODUCTS: Product[] = [
   {
@@ -72,13 +68,37 @@ const INITIAL_PRODUCTS: Product[] = [
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+
+  // Filter state
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [filters, setFilters] = useState<ProductFilters>({
+    categories: [],
+    priceRange: [0, 1000000],
+    stockFilter: "all",
+  });
+
+  // Calculate price bounds from products
+  const priceBounds = useMemo(() => {
+    const prices = products.flatMap((p) => p.units.map((u) => u.price_sell));
+    return {
+      min: prices.length > 0 ? Math.min(...prices) : 0,
+      max: prices.length > 0 ? Math.max(...prices) : 1000000,
+    };
+  }, [products]);
+
+  // Initialize price range on mount
+  useMemo(() => {
+    setFilters((prev) => ({
+      ...prev,
+      priceRange: [priceBounds.min, priceBounds.max],
+    }));
+  }, [priceBounds.min, priceBounds.max]);
 
   // Barcode not found dialog states
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
@@ -114,10 +134,40 @@ export default function ProductList() {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.barcode?.includes(search);
+
     const matchesCategory =
-      categoryFilter === "ALL" || p.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+      filters.categories.length === 0 ||
+      filters.categories.includes(p.category);
+
+    const matchesPrice =
+      p.units.some(
+        (u) =>
+          u.price_sell >= filters.priceRange[0] &&
+          u.price_sell <= filters.priceRange[1]
+      );
+
+    const matchesStock =
+      filters.stockFilter === "all" ||
+      (filters.stockFilter === "low" && p.stock_qty < 100) ||
+      (filters.stockFilter === "medium" &&
+        p.stock_qty >= 100 &&
+        p.stock_qty <= 200) ||
+      (filters.stockFilter === "high" && p.stock_qty > 200);
+
+    return matchesSearch && matchesCategory && matchesPrice && matchesStock;
   });
+
+  const getActiveFilterCount = (filters: ProductFilters): number => {
+    let count = 0;
+    if (filters.categories.length > 0) count++;
+    if (
+      filters.priceRange[0] > priceBounds.min ||
+      filters.priceRange[1] < priceBounds.max
+    )
+      count++;
+    if (filters.stockFilter !== "all") count++;
+    return count;
+  };
 
   const handleSaveProduct = (productData: Product) => {
     if (selectedProduct) {
@@ -240,19 +290,18 @@ export default function ProductList() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-1 no-scrollbar">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-[150px]">
-              <SelectValue placeholder="Pilih Kategori" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">Semua Kategori</SelectItem>
-              {PRODUCT_CATEGORIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <button
+            onClick={() => setIsFilterModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-3 bg-[#0f172a] border border-slate-800 rounded-xl text-white hover:bg-slate-800 transition-colors"
+          >
+            <Filter size={18} />
+            <span className="font-bold text-sm">Filter</span>
+            {getActiveFilterCount(filters) > 0 && (
+              <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                {getActiveFilterCount(filters)}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
@@ -264,7 +313,9 @@ export default function ProductList() {
               Tidak ada produk
             </h3>
             <p className="text-sm text-slate-500">
-              {search || categoryFilter !== "ALL"
+              {search ||
+              filters.categories.length > 0 ||
+              filters.stockFilter !== "all"
                 ? "Tidak ada produk yang sesuai dengan pencarian atau filter Anda."
                 : "Mulai dengan menambahkan produk baru."}
             </p>
@@ -396,6 +447,15 @@ export default function ProductList() {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleBarcodeScan}
+      />
+
+      <ProductFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApplyFilters={setFilters}
+        currentFilters={filters}
+        products={products}
+        allCategories={[...PRODUCT_CATEGORIES]}
       />
     </div>
   );
