@@ -7,6 +7,8 @@ import {
   AlertCircle,
   Camera,
   Filter,
+  ArrowUpDown,
+  X,
 } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import ProductModal from "../components/products/ProductModal";
@@ -15,6 +17,7 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 import SwipeableProductCard from "../components/products/SwipeableProductCard";
 import BarcodeScanner from "../components/products/BarcodeScanner";
 import ProductFilterModal from "../components/filters/ProductFilterModal";
+import SortModal, { type SortOptionValue } from "../components/filters/SortModal";
 
 import type { Product } from "../types/product";
 import { PRODUCT_CATEGORIES } from "../types/product";
@@ -83,6 +86,10 @@ export default function ProductList() {
     stockFilter: "all",
   });
 
+  // Sort state
+  const [isSortModalOpen, setIsSortModalOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOptionValue>("name-asc");
+
   // Calculate price bounds from products
   const priceBounds = useMemo(() => {
     const prices = products.flatMap((p) => p.units.map((u) => u.price_sell));
@@ -90,6 +97,19 @@ export default function ProductList() {
       min: prices.length > 0 ? Math.min(...prices) : 0,
       max: prices.length > 0 ? Math.max(...prices) : 1000000,
     };
+  }, [products]);
+
+  // Calculate top 3 categories for quick filter chips
+  const top3Categories = useMemo(() => {
+    const counts = products.reduce((acc, p) => {
+      acc[p.category] = (acc[p.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([cat]) => cat);
   }, [products]);
 
   // Initialize price range on mount
@@ -130,32 +150,56 @@ export default function ProductList() {
     }
   };
 
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.barcode?.includes(search);
+  const filteredProducts = products
+    .filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.barcode?.includes(search);
 
-    const matchesCategory =
-      filters.categories.length === 0 ||
-      filters.categories.includes(p.category);
+      const matchesCategory =
+        filters.categories.length === 0 ||
+        filters.categories.includes(p.category);
 
-    const matchesPrice =
-      p.units.some(
+      const matchesPrice = p.units.some(
         (u) =>
           u.price_sell >= filters.priceRange[0] &&
-          u.price_sell <= filters.priceRange[1]
+          u.price_sell <= filters.priceRange[1],
       );
 
-    const matchesStock =
-      filters.stockFilter === "all" ||
-      (filters.stockFilter === "low" && p.stock_qty < 100) ||
-      (filters.stockFilter === "medium" &&
-        p.stock_qty >= 100 &&
-        p.stock_qty <= 200) ||
-      (filters.stockFilter === "high" && p.stock_qty > 200);
+      const matchesStock =
+        filters.stockFilter === "all" ||
+        (filters.stockFilter === "low" && p.stock_qty < 100) ||
+        (filters.stockFilter === "medium" &&
+          p.stock_qty >= 100 &&
+          p.stock_qty <= 200) ||
+        (filters.stockFilter === "high" && p.stock_qty > 200);
 
-    return matchesSearch && matchesCategory && matchesPrice && matchesStock;
-  });
+      return matchesSearch && matchesCategory && matchesPrice && matchesStock;
+    })
+    .sort((a, b) => {
+      // Get default price for sorting
+      const getPrice = (p: Product) => {
+        const defaultUnit = p.units.find((u) => u.is_default);
+        return defaultUnit ? defaultUnit.price_sell : p.units[0].price_sell;
+      };
+
+      switch (sortBy) {
+        case "name-asc":
+          return a.name.localeCompare(b.name, "id-ID");
+        case "name-desc":
+          return b.name.localeCompare(a.name, "id-ID");
+        case "price-asc":
+          return getPrice(a) - getPrice(b);
+        case "price-desc":
+          return getPrice(b) - getPrice(a);
+        case "stock-asc":
+          return a.stock_qty - b.stock_qty;
+        case "stock-desc":
+          return b.stock_qty - a.stock_qty;
+        default:
+          return 0;
+      }
+    });
 
   const getActiveFilterCount = (filters: ProductFilters): number => {
     let count = 0;
@@ -167,6 +211,41 @@ export default function ProductList() {
       count++;
     if (filters.stockFilter !== "all") count++;
     return count;
+  };
+
+  // Quick category filter - toggles category
+  const handleQuickCategoryFilter = (category: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      categories: prev.categories.includes(category)
+        ? prev.categories.filter((c) => c !== category)
+        : [...prev.categories, category],
+    }));
+  };
+
+  // Quick stock filter - sets stock level
+  const handleQuickStockFilter = (level: "all" | "low" | "medium" | "high") => {
+    setFilters((prev) => ({
+      ...prev,
+      stockFilter: prev.stockFilter === level ? "all" : level,
+    }));
+  };
+
+  // Remove single category
+  const handleRemoveCategory = (category: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      categories: prev.categories.filter((c) => c !== category),
+    }));
+  };
+
+  // Clear all filters
+  const handleClearAllFilters = () => {
+    setFilters({
+      categories: [],
+      priceRange: [priceBounds.min, priceBounds.max],
+      stockFilter: "all",
+    });
   };
 
   const handleSaveProduct = (productData: Product) => {
@@ -289,20 +368,96 @@ export default function ProductList() {
           </button>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {/* Filter Chips Bar - Horizontal Scrollable */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {/* Quick Category Chips - Top 3 categories */}
+          {top3Categories.map((category) => (
+            <button
+              key={category}
+              onClick={() => handleQuickCategoryFilter(category)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                filters.categories.includes(category)
+                  ? "bg-primary text-white"
+                  : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+
+          {/* Stock Quick Filter */}
+          <button
+            onClick={() => handleQuickStockFilter("low")}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              filters.stockFilter === "low"
+                ? "bg-orange-500/20 text-orange-400 border border-orange-500/30"
+                : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
+            }`}
+          >
+            <AlertCircle size={14} />
+            <span>Stock Menipis</span>
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-slate-700 flex-shrink-0" />
+
+          {/* Sort Button */}
+          <button
+            onClick={() => setIsSortModalOpen(true)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+          >
+            <ArrowUpDown size={14} />
+            <span>Urutkan</span>
+          </button>
+
+          {/* Advanced Filter Button */}
           <button
             onClick={() => setIsFilterModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-3 bg-[#0f172a] border border-slate-800 rounded-xl text-white hover:bg-slate-800 transition-colors"
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              getActiveFilterCount(filters) > 0
+                ? "bg-primary text-white"
+                : "bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700"
+            }`}
           >
-            <Filter size={18} />
-            <span className="font-bold text-sm">Filter</span>
+            <Filter size={14} />
             {getActiveFilterCount(filters) > 0 && (
-              <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-white/20 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
                 {getActiveFilterCount(filters)}
               </span>
             )}
           </button>
         </div>
+
+        {/* Active Filters Display - Show dismissible chips */}
+        {getActiveFilterCount(filters) > 0 && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {filters.categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => handleRemoveCategory(cat)}
+                className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30"
+              >
+                {cat}
+                <X size={12} />
+              </button>
+            ))}
+            {filters.stockFilter !== "all" && filters.stockFilter !== "low" && (
+              <button
+                onClick={() => setFilters((prev) => ({ ...prev, stockFilter: "all" }))}
+                className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30"
+              >
+                {filters.stockFilter === "medium" ? "Stok Sedang" : "Stok Tinggi"}
+                <X size={12} />
+              </button>
+            )}
+            <button
+              onClick={handleClearAllFilters}
+              className="flex-shrink-0 px-2 py-1 rounded-full text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800"
+            >
+              Reset semua
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -456,6 +611,13 @@ export default function ProductList() {
         currentFilters={filters}
         products={products}
         allCategories={[...PRODUCT_CATEGORIES]}
+      />
+
+      <SortModal
+        isOpen={isSortModalOpen}
+        onClose={() => setIsSortModalOpen(false)}
+        onSortSelect={setSortBy}
+        currentSort={sortBy}
       />
     </div>
   );
