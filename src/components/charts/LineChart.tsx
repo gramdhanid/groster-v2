@@ -1,75 +1,120 @@
-import { useEffect, useRef } from 'react';
-import uPlot from 'uplot';
-import 'uplot/dist/uPlot.min.css';
-import { formatCurrency } from '../../utils/format';
+import { useEffect, useRef } from "react";
+import uPlot from "uplot";
+import "uplot/dist/uPlot.min.css";
+import { formatCurrency } from "../../utils/format";
 
 interface LineChartProps {
-    data: [number[], number[]]; // [x-values (timestamps), y-values]
-    width?: number;
-    height?: number;
+  data: [number[], number[]]; // [x-values (timestamps), y-values]
+  width?: number;
+  height?: number;
+  formatValue?: (value: number) => string;
+  primaryColor?: string;
 }
 
-export default function LineChart({ data, width = 0, height = 300 }: LineChartProps) {
-    const chartRef = useRef<HTMLDivElement>(null);
-    const uplotRef = useRef<uPlot | null>(null);
+export default function LineChart({
+  data,
+  width = 0,
+  height = 300,
+  formatValue,
+  primaryColor = "#10b981",
+}: LineChartProps) {
+  const chartRef = useRef<HTMLDivElement>(null);
+  const uplotRef = useRef<uPlot | null>(null);
 
-    useEffect(() => {
-        if (!chartRef.current) return;
+  useEffect(() => {
+    if (!chartRef.current) return;
 
-        // Destroy previous instance
-        if (uplotRef.current) {
-            uplotRef.current.destroy();
-        }
+    // Destroy previous instance
+    if (uplotRef.current) {
+      uplotRef.current.destroy();
+    }
 
-        // Measure actual width if not provided
-        const actualWidth = width > 0 ? width : chartRef.current.clientWidth;
+    // Measure actual width if not provided
+    const actualWidth = width > 0 ? width : chartRef.current.clientWidth;
 
-        const opts: uPlot.Options = {
-            width: actualWidth,
-            height,
-            axes: [
-                {
-                    grid: { show: false },
-                },
-                {
-                    grid: { stroke: '#eee', width: 1 },
-                    values: (_u, vals) => vals.map(v => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v >= 1000 ? (v / 1000).toFixed(0) + 'K' : String(v)),
-                }
-            ],
-            series: [
-                {},
-                {
-                    stroke: '#10b981', // Tailwind primary
-                    fill: 'rgba(16, 185, 129, 0.1)',
-                    width: 2,
-                    value: (_u, v) => v == null ? '-' : formatCurrency(v),
-                }
-            ],
-            cursor: {
-                points: { size: 8, fill: '#fff', stroke: '#10b981', width: 2 }
-            }
-        };
+    const opts: uPlot.Options = {
+      width: actualWidth,
+      height,
+      axes: [
+        {
+          grid: { show: false },
+          ticks: { stroke: "#475569" }, // slate-600
+          values: (_u, splits) => {
+            // Format timestamps as dates
+            return splits.map((v) => {
+              const date = new Date(v * 1000);
+              return date.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "short",
+              });
+            });
+          },
+        },
+        {
+          grid: { stroke: "#334155", width: 1 }, // slate-700 for dark theme
+          ticks: { stroke: "#475569" }, // slate-600
+          values: (_u, vals) =>
+            vals.map((v) => {
+              if (v == null) return "-";
+              if (formatValue) return formatValue(v);
+              // Default formatting for large numbers
+              if (v >= 1000000) return (v / 1000000).toFixed(1) + "M";
+              if (v >= 1000) return (v / 1000).toFixed(0) + "K";
+              return String(v);
+            }),
+        },
+      ],
+      series: [
+        {},
+        {
+          stroke: primaryColor,
+          fill: `${primaryColor}20`, // Add transparency for area fill
+          width: 2,
+          value: (_u, v) =>
+            v == null ? "-" : formatValue ? formatValue(v) : formatCurrency(v),
+        },
+      ],
+      cursor: {
+        points: { size: 8, fill: "#fff", stroke: primaryColor, width: 2 },
+      },
+      scales: {
+        x: {
+          time: true,
+        },
+        y: {
+          range: (_u, min, max) => {
+            // Add padding to the range
+            const padding = (max - min) * 0.1;
+            return [min - padding, max + padding];
+          },
+        },
+      },
+    };
 
-        uplotRef.current = new uPlot(opts, data as uPlot.AlignedData, chartRef.current);
+    uplotRef.current = new uPlot(
+      opts,
+      data as uPlot.AlignedData,
+      chartRef.current,
+    );
 
-        return () => {
-            if (uplotRef.current) uplotRef.current.destroy();
-        };
-    }, [data, width, height]);
+    return () => {
+      if (uplotRef.current) uplotRef.current.destroy();
+    };
+  }, [data, width, height, formatValue, primaryColor]);
 
-    // Handle resize gracefully
-    useEffect(() => {
-        const handleResize = () => {
-            if (chartRef.current && uplotRef.current && width === 0) {
-                uplotRef.current.setSize({
-                    width: chartRef.current.clientWidth,
-                    height: height
-                });
-            }
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [width, height]);
+  // Handle resize gracefully
+  useEffect(() => {
+    const handleResize = () => {
+      if (chartRef.current && uplotRef.current && width === 0) {
+        uplotRef.current.setSize({
+          width: chartRef.current.clientWidth,
+          height: height,
+        });
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [width, height]);
 
-    return <div ref={chartRef} className="w-full relative" />;
+  return <div ref={chartRef} className="w-full relative text-white" />;
 }
