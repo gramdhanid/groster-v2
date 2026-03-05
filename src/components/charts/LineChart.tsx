@@ -37,10 +37,11 @@ export default function LineChart({
       height,
       axes: [
         {
+          // Sumbu X (Tanggal)
+          stroke: "#cbd5e1", // Ganti ke warna terang (misal: slate-300) atau "#fff"
           grid: { show: false },
-          ticks: { stroke: "#475569" }, // slate-600
+          ticks: { stroke: "#475569" },
           values: (_u, splits) => {
-            // Format timestamps as dates
             return splits.map((v) => {
               const date = new Date(v * 1000);
               return date.toLocaleDateString("id-ID", {
@@ -51,13 +52,15 @@ export default function LineChart({
           },
         },
         {
-          grid: { stroke: "#334155", width: 1 }, // slate-700 for dark theme
-          ticks: { stroke: "#475569" }, // slate-600
+          // Sumbu Y (Angka/Pendapatan)
+          stroke: "#cbd5e1", // Ganti ke warna terang atau "#fff"
+          grid: { stroke: "#334155", width: 1 },
+          ticks: { stroke: "#475569" },
           values: (_u, vals) =>
             vals.map((v) => {
+              console.log("This Value Y: ", v);
               if (v == null) return "-";
               if (formatValue) return formatValue(v);
-              // Default formatting for large numbers
               if (v >= 1000000) return (v / 1000000).toFixed(1) + "M";
               if (v >= 1000) return (v / 1000).toFixed(0) + "K";
               return String(v);
