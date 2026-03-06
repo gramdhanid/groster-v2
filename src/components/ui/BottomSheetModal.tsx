@@ -5,6 +5,19 @@ import { useSwipeToDismiss } from '@/hooks/useSwipeToDismiss';
 import { useModalBackButton } from '@/hooks/useModalBackButton';
 import { ModalPortal } from './ModalPortal';
 
+export interface ModalButton {
+  /** Button label text */
+  label: string;
+  /** Click handler */
+  onClick: () => void;
+  /** Whether the button is disabled */
+  disabled?: boolean;
+  /** Optional icon to display before the label */
+  icon?: ReactNode;
+  /** Additional classes for the button */
+  className?: string;
+}
+
 export interface BottomSheetModalProps {
   /** Whether the modal is open */
   isOpen: boolean;
@@ -22,6 +35,12 @@ export interface BottomSheetModalProps {
   children: ReactNode;
   /** Optional footer content (buttons, totals, etc.) */
   footer?: ReactNode;
+  /** Content to show above the buttons (e.g., totals, summary) */
+  footerSummary?: ReactNode;
+  /** Primary action button (right side when both buttons present) */
+  primaryButton?: ModalButton;
+  /** Secondary/cancel button (left side when both buttons present) */
+  secondaryButton?: ModalButton;
   /** Additional classes for the modal container */
   className?: string;
   /** Additional classes for the body content */
@@ -70,6 +89,9 @@ export function BottomSheetModal({
   swipeToDismiss = true,
   children,
   footer,
+  footerSummary,
+  primaryButton,
+  secondaryButton,
   className,
   bodyClassName,
 }: BottomSheetModalProps) {
@@ -87,6 +109,76 @@ export function BottomSheetModal({
   });
 
   const modalSize = sizeClasses[size];
+
+  // Helper component to render a button
+  const ModalButton = ({
+    button,
+    variant,
+    widthClass,
+  }: {
+    button: ModalButton;
+    variant: 'primary' | 'secondary';
+    widthClass?: string;
+  }) => {
+    const baseClasses = 'py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2';
+
+    const variantClasses = {
+      primary: 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90',
+      secondary: 'bg-slate-800 text-slate-400 hover:bg-slate-700 border-0',
+    };
+
+    return (
+      <button
+        type="button"
+        onClick={button.onClick}
+        disabled={button.disabled}
+        className={cn(
+          baseClasses,
+          variantClasses[variant],
+          widthClass,
+          button.disabled && 'opacity-50 cursor-not-allowed',
+          button.className,
+        )}
+      >
+        {button.icon}
+        {button.label}
+      </button>
+    );
+  };
+
+  // Render buttons from props
+  const renderButtons = () => {
+    const hasBothButtons = primaryButton && secondaryButton;
+    const containerClasses = hasBothButtons ? 'flex gap-3' : '';
+    const buttonWidthClass = hasBothButtons ? 'flex-1' : 'w-full';
+
+    return (
+      <div className={containerClasses}>
+        {secondaryButton && (
+          <ModalButton
+            button={secondaryButton}
+            variant="secondary"
+            widthClass={buttonWidthClass}
+          />
+        )}
+        {primaryButton && (
+          <ModalButton
+            button={primaryButton}
+            variant="primary"
+            widthClass={buttonWidthClass}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // Footer logic: if custom footer is provided, use it; otherwise render button props
+  const footerContent = footer || (
+    <>
+      {footerSummary && <div className="mb-3">{footerSummary}</div>}
+      {primaryButton || secondaryButton ? renderButtons() : null}
+    </>
+  );
 
   return (
     <ModalPortal isActive={isOpen}>
@@ -130,9 +222,9 @@ export function BottomSheetModal({
         </div>
 
         {/* Footer */}
-        {footer && (
+        {footerContent && (
           <div className="p-6 pt-0 flex-shrink-0">
-            {footer}
+            {footerContent}
           </div>
         )}
       </div>

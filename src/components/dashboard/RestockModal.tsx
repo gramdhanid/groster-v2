@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { Package, MessageCircle } from "lucide-react";
+import { Package } from "lucide-react";
+import type { ModalButton } from "@/components/ui/BottomSheetModal";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -8,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { BottomSheetModal } from "@/components/ui/BottomSheetModal";
 import { formatCurrency } from "@/utils/format";
 import type { RestockModalProps, RestockOrderItem } from "@/types/restock";
@@ -108,6 +108,17 @@ Terima kasih.`;
 
   const isValid = selectedSupplierId && selectedCount > 0;
 
+  const secondaryButton: ModalButton = {
+    label: "Batal",
+    onClick: onClose,
+  };
+
+  const primaryButton: ModalButton = {
+    label: "Kirim WhatsApp",
+    onClick: handleSendWhatsApp,
+    disabled: !isValid,
+  };
+
   return (
     <BottomSheetModal
       isOpen={isOpen}
@@ -116,35 +127,16 @@ Terima kasih.`;
       icon={<Package size={20} />}
       size="md"
       bodyClassName="p-6"
-      footer={
-        <>
-          {/* Order Summary */}
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-slate-400">Total Estimasi:</span>
-            <span className="text-2xl font-black text-primary">
-              {formatCurrency(totalCost)}
-            </span>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <Button
-              onClick={onClose}
-              className="flex-1 py-3.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 border-0"
-            >
-              Batal
-            </Button>
-            <Button
-              onClick={handleSendWhatsApp}
-              disabled={!isValid}
-              className="flex-1 py-3.5 rounded-xl font-bold bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <MessageCircle size={18} />
-              Kirim via WhatsApp
-            </Button>
-          </div>
-        </>
+      footerSummary={
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-400">Total Estimasi:</span>
+          <span className="text-2xl font-black text-primary">
+            {formatCurrency(totalCost)}
+          </span>
+        </div>
       }
+      secondaryButton={secondaryButton}
+      primaryButton={primaryButton}
     >
       {/* Supplier Selection */}
       <section className="mb-6">

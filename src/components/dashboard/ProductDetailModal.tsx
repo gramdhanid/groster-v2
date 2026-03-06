@@ -1,5 +1,5 @@
 import { Package, PackagePlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import type { ModalButton } from "@/components/ui/BottomSheetModal";
 import { BottomSheetModal } from "@/components/ui/BottomSheetModal";
 import { Badge } from "@/components/ui/badge";
 import type { LowStockProduct } from "@/types/dashboard";
@@ -40,6 +40,15 @@ export default function ProductDetailModal({
   const status = getStatus();
   const stockNeeded = Math.max(0, product.minimumStock - product.currentStock);
 
+  const primaryButton: ModalButton = {
+    label: "Restock",
+    onClick: () => {
+      onRestock(product.id);
+      onClose();
+    },
+    icon: <PackagePlus size={18} />,
+  };
+
   return (
     <BottomSheetModal
       isOpen={isOpen}
@@ -48,18 +57,7 @@ export default function ProductDetailModal({
       icon={<Package size={20} />}
       size="md"
       bodyClassName="p-6"
-      footer={
-        <Button
-          onClick={() => {
-            onRestock(product.id);
-            onClose();
-          }}
-          className="w-full min-h-[44px] rounded-xl font-bold bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
-        >
-          <PackagePlus size={18} />
-          Restock
-        </Button>
-      }
+      primaryButton={primaryButton}
     >
       <div className="space-y-6">
         {/* Nama Produk */}
