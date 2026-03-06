@@ -1,18 +1,9 @@
-import { Package } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { PackagePlus } from 'lucide-react';
-import type { LowStockProduct } from '@/types/dashboard';
-import { cn } from '@/lib/utils';
+import { Package } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { PackagePlus } from "lucide-react";
+import type { LowStockProduct } from "@/types/dashboard";
 
 interface LowStockAlertTableProps {
   products: LowStockProduct[];
@@ -20,15 +11,15 @@ interface LowStockAlertTableProps {
 }
 
 /**
- * Low stock alert table component
+ * Low stock alert component
  * Displays products below minimum stock with status badges and restock actions
  */
 export default function LowStockAlertTable({
   products,
   onRestock,
 }: LowStockAlertTableProps) {
-  const getStockStatus = (product: LowStockProduct): 'critical' | 'low' => {
-    return product.currentStock === 0 ? 'critical' : 'low';
+  const getStockStatus = (product: LowStockProduct): "critical" | "low" => {
+    return product.currentStock === 0 ? "critical" : "low";
   };
 
   return (
@@ -39,75 +30,55 @@ export default function LowStockAlertTable({
           Low Stock Alert
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="max-h-80 overflow-y-auto">
-          <Table>
-            <TableHeader className="sticky top-0 bg-[#0f172a] z-10">
-              <TableRow className="border-slate-800 hover:bg-slate-800/20">
-                <TableHead className="text-slate-400">Product Name</TableHead>
-                <TableHead className="text-slate-400 text-right">Current Stock</TableHead>
-                <TableHead className="text-slate-400 text-right">Min Stock</TableHead>
-                <TableHead className="text-slate-400 text-center">Status</TableHead>
-                <TableHead className="text-slate-400 text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-slate-400 py-8">
-                    All products are well stocked!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                products.map((product) => {
-                  const status = getStockStatus(product);
-                  return (
-                    <TableRow
-                      key={product.id}
-                      className={cn(
-                        'border-slate-800/50 hover:bg-slate-800/20 transition-colors',
-                        status === 'critical' && 'bg-red-950/20'
-                      )}
-                    >
-                      <TableCell className="font-medium text-slate-200">
-                        {product.name}
-                      </TableCell>
-                      <TableCell className="text-right text-white">
-                        {product.currentStock}
-                      </TableCell>
-                      <TableCell className="text-right text-slate-400">
-                        {product.minimumStock}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge
-                          variant={status === 'critical' ? 'destructive' : 'secondary'}
-                          className={
-                            status === 'critical'
-                              ? 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30'
-                              : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
-                          }
-                        >
-                          {status === 'critical' ? 'Critical' : 'Low'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => onRestock?.(product.id)}
-                          className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200 hover:text-white"
-                        >
-                          <PackagePlus size={14} className="mr-1" />
-                          Restock
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+      <CardContent className="space-y-3 max-h-80 overflow-y-auto">
+        {products.length === 0 ? (
+          <div className="text-center text-slate-400 py-8">
+            All products are well stocked!
+          </div>
+        ) : (
+          products.map((product) => {
+            const status = getStockStatus(product);
+            return (
+              <div
+                key={product.id}
+                className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+                  status === "critical"
+                    ? "bg-red-950/20 hover:bg-red-950/30"
+                    : "hover:bg-slate-800/20"
+                }`}
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <span className="font-medium text-slate-200 truncate">
+                    {product.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <Badge
+                    variant={
+                      status === "critical" ? "destructive" : "secondary"
+                    }
+                    className={
+                      status === "critical"
+                        ? "bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30"
+                        : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30"
+                    }
+                  >
+                    {product.currentStock} / {product.minimumStock}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onRestock?.(product.id)}
+                    className="bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200 hover:text-white"
+                  >
+                    <PackagePlus size={14} className="mr-1" />
+                    Restock
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
       </CardContent>
     </Card>
   );
