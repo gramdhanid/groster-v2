@@ -1,4 +1,5 @@
 import { X, RefreshCw, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
+import { ModalPortal } from '@/components/ui/ModalPortal';
 
 interface SyncStatusModalProps {
     isOpen: boolean;
@@ -9,10 +10,9 @@ interface SyncStatusModalProps {
 }
 
 export default function SyncStatusModal({ isOpen, onClose, syncStatus, pendingCount, onSync }: SyncStatusModalProps) {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <ModalPortal isActive={isOpen}>
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-[#1e293b] w-full max-w-sm rounded-3xl shadow-2xl border border-slate-700 overflow-hidden animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="p-6 flex items-center justify-between border-b border-slate-800">
@@ -71,5 +71,6 @@ export default function SyncStatusModal({ isOpen, onClose, syncStatus, pendingCo
                 </div>
             </div>
         </div>
+        </ModalPortal>
     );
 }

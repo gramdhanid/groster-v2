@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useSwipeToDismiss } from '@/hooks/useSwipeToDismiss';
 import { useModalBackButton } from '@/hooks/useModalBackButton';
+import { ModalPortal } from './ModalPortal';
 
 export interface BottomSheetModalProps {
   /** Whether the modal is open */
@@ -85,15 +86,14 @@ export function BottomSheetModal({
     enabled: swipeToDismiss,
   });
 
-  if (!isOpen) return null;
-
   const modalSize = sizeClasses[size];
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity"
-      onClick={onClose}
-    >
+    <ModalPortal isActive={isOpen}>
+      <div
+        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity"
+        onClick={onClose}
+      >
       <div
         className={cn(
           'bg-[#0f172a] w-full rounded-t-3xl sm:rounded-2xl shadow-2xl text-white animate-in slide-in-from-bottom duration-300 relative max-h-[85vh] flex flex-col',
@@ -134,5 +134,6 @@ export function BottomSheetModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 }

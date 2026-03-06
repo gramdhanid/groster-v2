@@ -1,5 +1,6 @@
 import { AlertTriangle, Info, AlertCircle } from "lucide-react";
 import { useModalBackButton } from "@/hooks/useModalBackButton";
+import { ModalPortal } from "./ModalPortal";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -49,16 +50,15 @@ export default function ConfirmDialog({
   // Handle mobile back button
   useModalBackButton({ isOpen, onClose });
 
-  if (!isOpen) return null;
-
   const config = variantConfig[variant];
   const Icon = config.icon;
 
   return (
-    <div
-      className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose}
-    >
+    <ModalPortal isActive={isOpen}>
+      <div
+        className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        onClick={onClose}
+      >
       <div
         className="bg-[#1e293b] w-full max-w-sm rounded-3xl shadow-2xl border border-slate-700 overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
@@ -95,5 +95,6 @@ export default function ConfirmDialog({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
