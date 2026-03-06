@@ -87,13 +87,11 @@ export default function LineChart({
       ],
       cursor: {
         points: { show: false },
-        // Biarkan uPlot tracking cursor secara internal
-        // x/y: false akan disable default cursor rendering, tapi kita butuh
-        // idx tracking — jadi jangan disable x
         x: true,
         y: false,
-        drag: { setScale: false }, // disable zoom drag, ini POS bukan analytics
+        drag: { setScale: false },
       },
+      legend: { show: false }, // hide default uPlot legend (Time/Value row di bawah chart)
       scales: {
         x: { time: true },
         y: {
@@ -225,9 +223,10 @@ export default function LineChart({
         containerEl,
       );
 
-      // Mouse enter/leave untuk show/hide indicators
+      // Mouse + Touch events untuk show/hide dan drag indicator
       const over = containerEl.querySelector<HTMLElement>(".u-over");
       if (over) {
+        // --- Mouse ---
         const show = () => {
           indicatorLineRef.current?.classList.remove("opacity-0");
           circleIndicatorRef.current?.classList.remove("opacity-0");
@@ -240,10 +239,46 @@ export default function LineChart({
         over.addEventListener("mouseenter", show);
         over.addEventListener("mouseleave", hide);
 
-        // Simpan cleanup di instance
+        // --- Touch: forward touch events ke uPlot sebagai synthetic MouseEvent ---
+        // uPlot hanya listen mousemove/mouseleave, jadi kita perlu simulate
+        const forwardTouch = (e: TouchEvent) => {
+          e.preventDefault(); // prevent scroll saat drag chart
+          const touch = e.touches[0];
+          if (!touch) return;
+
+          // Buat synthetic mousemove event di koordinat touch
+          const mouseEvent = new MouseEvent("mousemove", {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            bubbles: true,
+          });
+          over.dispatchEvent(mouseEvent);
+
+          // Tampilkan indicators
+          indicatorLineRef.current?.classList.remove("opacity-0");
+          circleIndicatorRef.current?.classList.remove("opacity-0");
+        };
+
+        const handleTouchEnd = () => {
+          // Sembunyikan indicators saat jari diangkat
+          setTimeout(() => {
+            indicatorLineRef.current?.classList.add("opacity-0");
+            circleIndicatorRef.current?.classList.add("opacity-0");
+            tooltipRef.current?.classList.add("opacity-0");
+          }, 1500); // delay sedikit agar user sempat baca tooltip
+        };
+
+        over.addEventListener("touchstart", forwardTouch, { passive: false });
+        over.addEventListener("touchmove", forwardTouch, { passive: false });
+        over.addEventListener("touchend", handleTouchEnd);
+
+        // Simpan cleanup
         (uplotRef.current as any)._cleanup = () => {
           over.removeEventListener("mouseenter", show);
           over.removeEventListener("mouseleave", hide);
+          over.removeEventListener("touchstart", forwardTouch);
+          over.removeEventListener("touchmove", forwardTouch);
+          over.removeEventListener("touchend", handleTouchEnd);
         };
       }
     },
