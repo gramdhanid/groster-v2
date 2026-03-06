@@ -121,13 +121,38 @@ export default function BarcodeScanner({
     if (!streamRef.current) return;
 
     try {
-      const newState = !torchOn;
       const tracks = streamRef.current.getVideoTracks();
-      if (tracks.length > 0) {
-        await tracks[0].applyConstraints({
-          advanced: [{ torch: newState }] as any,
+      if (tracks.length === 0) return;
+
+      const track = tracks[0];
+      const capabilities = track.getCapabilities();
+
+      // Check if torch is supported
+      if (!('torch' in capabilities) || !capabilities.torch) {
+        setTorchAvailable(false);
+        return;
+      }
+
+      const newState = !torchOn;
+
+      // Try different constraint formats for Android compatibility
+      try {
+        // Format 1: Standard advanced constraint (works on iOS)
+        await track.applyConstraints({
+          advanced: [{ torch: newState }]
         });
         setTorchOn(newState);
+      } catch (e) {
+        // Format 2: Direct constraint (some Android versions)
+        try {
+          await track.applyConstraints({
+            torch: newState
+          } as any);
+          setTorchOn(newState);
+        } catch (e2) {
+          console.debug('Torch toggle failed:', e2);
+          setTorchAvailable(false);
+        }
       }
     } catch (err) {
       console.debug("Torch toggle error:", err);
@@ -315,7 +340,17 @@ export default function BarcodeScanner({
         });
 
         streamRef.current = stream;
-        setTorchAvailable(true);
+
+        // Check torch capability
+        const videoTrack = stream.getVideoTracks()[0];
+        try {
+          const capabilities = videoTrack.getCapabilities();
+          const hasTorch = 'torch' in capabilities && capabilities.torch;
+          setTorchAvailable(hasTorch);
+        } catch {
+          // getCapabilities might not be supported in some browsers
+          setTorchAvailable(false);
+        }
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
