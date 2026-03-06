@@ -1,0 +1,121 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+interface UseSwipeToDismissProps {
+  isOpen: boolean;
+  onClose: () => void;
+  threshold?: number;
+  enabled?: boolean;
+}
+
+interface SwipeHandlers {
+  onTouchStart: (e: React.TouchEvent) => void;
+  onTouchMove: (e: React.TouchEvent) => void;
+  onTouchEnd: () => void;
+  onMouseDown: (e: React.MouseEvent) => void;
+  onMouseMove: (e: React.MouseEvent) => void;
+  onMouseUp: () => void;
+  onMouseLeave: () => void;
+}
+
+interface SwipeResult {
+  handlers: SwipeHandlers;
+  style: React.CSSProperties;
+  contentRef: React.RefObject<HTMLDivElement | null>;
+  canPullToDismiss: boolean;
+  onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
+}
+
+/**
+ * Hook to handle swipe-to-dismiss gesture for bottom sheet modals.
+ *
+ * Features:
+ * - Drag down on mobile to dismiss modal
+ * - Visual feedback during drag
+ * - Smart detection: only allows drag when content is at top
+ * - Configurable threshold
+ * - Can be disabled via `enabled` prop
+ *
+ * @param props - Configuration options
+ * @returns Handlers, styles, and refs to attach to modal elements
+ */
+export function useSwipeToDismiss({
+  isOpen,
+  onClose,
+  threshold = 150,
+  enabled = true,
+}: UseSwipeToDismissProps): SwipeResult {
+  const [dragStartY, setDragStartY] = useState(0);
+  const [currentDragY, setCurrentDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [canPullToDismiss, setCanPullToDismiss] = useState(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (!enabled || !canPullToDismiss) return;
+
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragStartY(clientY);
+    setIsDragging(true);
+  }, [enabled, canPullToDismiss]);
+
+  const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (!isDragging) return;
+
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const deltaY = clientY - dragStartY;
+
+    // Only allow downward drag (deltaY positive)
+    if (deltaY > 0) {
+      setCurrentDragY(deltaY);
+    }
+  }, [isDragging, dragStartY]);
+
+  const handleDragEnd = useCallback(() => {
+    // If drag exceeds threshold, close modal
+    if (currentDragY > threshold) {
+      onClose();
+    } else {
+      // Return to original position
+      setCurrentDragY(0);
+    }
+    setIsDragging(false);
+  }, [currentDragY, threshold, onClose]);
+
+  // Reset drag state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentDragY(0);
+      setIsDragging(false);
+      setDragStartY(0);
+      setCanPullToDismiss(true);
+    }
+  }, [isOpen]);
+
+  // Handle scroll for smart pull-to-dismiss behavior
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    // Only allow pull-to-dismiss when at top
+    setCanPullToDismiss(scrollTop === 0);
+  }, []);
+
+  const style: React.CSSProperties = {
+    transform: currentDragY > 0 ? `translateY(${currentDragY}px)` : 'translateY(0)',
+    transition: isDragging ? 'none' : 'transform 0.3s ease-out',
+  };
+
+  return {
+    handlers: {
+      onTouchStart: handleDragStart as (e: React.TouchEvent) => void,
+      onTouchMove: handleDragMove as (e: React.TouchEvent) => void,
+      onTouchEnd: handleDragEnd,
+      onMouseDown: handleDragStart as (e: React.MouseEvent) => void,
+      onMouseMove: handleDragMove as (e: React.MouseEvent) => void,
+      onMouseUp: handleDragEnd,
+      onMouseLeave: handleDragEnd,
+    },
+    style,
+    contentRef,
+    canPullToDismiss,
+    onScroll: handleScroll,
+  };
+}
