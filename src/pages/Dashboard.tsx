@@ -92,13 +92,12 @@ export default function Dashboard() {
       />
 
       {/* Sales Trend Chart */}
-      {salesTrendData && (
-        <SalesTrendChart
-          data={salesTrendData}
-          onTimeFilterChange={setTimeFilter}
-          currentTimeFilter={timeFilter}
-        />
-      )}
+      <SalesTrendChart
+        data={salesTrendData}
+        isLoading={salesTrendLoading}
+        onTimeFilterChange={setTimeFilter}
+        currentTimeFilter={timeFilter}
+      />
 
       {/* Two Column Layout for Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

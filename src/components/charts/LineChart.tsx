@@ -30,6 +30,7 @@ export default function LineChart({
   const uplotRef = useRef<uPlot | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const indicatorLineRef = useRef<HTMLDivElement>(null);
+  const circleIndicatorRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false,
     x: 0,
@@ -69,10 +70,11 @@ export default function LineChart({
           },
         },
         {
-          // Sumbu Y (Angka/Pendapatan) dengan format Indonesian (Jt, Rb)
+          // Sumbu Y (Angka/Pendapatan) dengan format Indonesian (Jt, rb)
           stroke: "#cbd5e1",
           grid: { stroke: "#334155", width: 1 },
           ticks: { stroke: "#475569" },
+          size: 70,
           values: (_u, vals) =>
             vals.map((v) => {
               if (v == null) return "-";
@@ -82,7 +84,7 @@ export default function LineChart({
               }
               // Default fallback dengan format Indonesian
               if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + " Jt";
-              if (v >= 1_000) return (v / 1_000).toFixed(0) + " Rb";
+              if (v >= 1_000) return (v / 1_000).toFixed(0) + "rb";
               return String(v);
             }),
         },
@@ -133,12 +135,19 @@ export default function LineChart({
                   const cursorLeft = u.cursor.left ?? 0;
                   const cursorTop = u.cursor.top ?? 0;
 
-                  // Calculate position for indicator line
+                  // Calculate position for indicator line and circle
                   const bbox = (u.root?.firstElementChild as HTMLElement)?.getBoundingClientRect();
                   if (bbox) {
                     // Update indicator line position
                     if (indicatorLineRef.current) {
                       indicatorLineRef.current.style.left = `${cursorLeft}px`;
+                    }
+
+                    // Update circle indicator position at the data point
+                    if (circleIndicatorRef.current && yVal != null) {
+                      const yPos = u.valToPos(yVal, "y", true);
+                      circleIndicatorRef.current.style.left = `${cursorLeft}px`;
+                      circleIndicatorRef.current.style.top = `${yPos}px`;
                     }
 
                     // Format date
@@ -211,10 +220,12 @@ export default function LineChart({
       const handleMouseEnter = () => {
         tooltipRef.current?.classList.remove("opacity-0");
         indicatorLineRef.current?.classList.remove("opacity-0");
+        circleIndicatorRef.current?.classList.remove("opacity-0");
       };
       const handleMouseLeave = () => {
         tooltipRef.current?.classList.add("opacity-0");
         indicatorLineRef.current?.classList.add("opacity-0");
+        circleIndicatorRef.current?.classList.add("opacity-0");
       };
       chartEl.addEventListener("mouseenter", handleMouseEnter);
       chartEl.addEventListener("mouseleave", handleMouseLeave);
@@ -259,6 +270,17 @@ export default function LineChart({
         ref={indicatorLineRef}
         className="absolute top-0 bottom-0 w-px border-l border-dashed border-white/50 pointer-events-none opacity-0 transition-opacity duration-150"
         style={{ left: 0 }}
+      />
+
+      {/* Circle Indicator at Data Point */}
+      <div
+        ref={circleIndicatorRef}
+        className="absolute w-4 h-4 rounded-full border-2 bg-white pointer-events-none opacity-0 transition-opacity duration-150"
+        style={{
+          borderColor: primaryColor,
+          boxShadow: `0 0 8px ${primaryColor}80`,
+          transform: "translate(-50%, -50%)",
+        }}
       />
 
       {/* Custom Tooltip */}

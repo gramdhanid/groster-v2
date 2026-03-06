@@ -17,7 +17,8 @@ import type {
 import { formatCurrency } from "@/utils/format";
 
 interface SalesTrendChartProps {
-  data: SalesTrendResponse;
+  data?: SalesTrendResponse;
+  isLoading?: boolean;
   onTimeFilterChange: (filter: TimeFilter) => void;
   currentTimeFilter: TimeFilter;
 }
@@ -40,25 +41,28 @@ const metrics: { value: SalesMetric; label: string }[] = [
  */
 export default function SalesTrendChart({
   data,
+  isLoading = false,
   onTimeFilterChange,
   currentTimeFilter,
 }: SalesTrendChartProps) {
   const [selectedMetric, setSelectedMetric] = useState<SalesMetric>("revenue");
 
   // Convert data to uPlot format: [timestamps[], values[]]
-  const chartData: [number[], number[]] = [
-    data.data.map((d) => d.timestamp),
-    data.data.map((d) => {
-      switch (selectedMetric) {
-        case "revenue":
-          return d.revenue;
-        case "profit":
-          return d.profit;
-        case "transactions":
-          return d.transactions;
-      }
-    }),
-  ];
+  const chartData: [number[], number[]] = data
+    ? [
+        data.data.map((d) => d.timestamp),
+        data.data.map((d) => {
+          switch (selectedMetric) {
+            case "revenue":
+              return d.revenue;
+            case "profit":
+              return d.profit;
+            case "transactions":
+              return d.transactions;
+          }
+        }),
+      ]
+    : [[], []];
 
   // Format function based on selected metric
   const formatValue = (value: number): string => {
@@ -115,7 +119,16 @@ export default function SalesTrendChart({
       </CardHeader>
       <CardContent>
         {/* Chart */}
-        <LineChart data={chartData} height={250} formatValue={formatValue} />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-[250px]">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-slate-400">Memuat data...</p>
+            </div>
+          </div>
+        ) : (
+          <LineChart data={chartData} height={250} formatValue={formatValue} />
+        )}
       </CardContent>
     </Card>
   );
