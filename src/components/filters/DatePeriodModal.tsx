@@ -36,6 +36,9 @@ export default function DatePeriodModal({
   currentStartDate,
   currentEndDate,
 }: DatePeriodModalProps) {
+  // Lock body scroll when modal is open
+  useScrollLock(isOpen);
+
   const [selectedPeriod, setSelectedPeriod] =
     useState<PeriodType>(currentPeriod);
   const [startDate, setStartDate] = useState<Date | undefined>(
