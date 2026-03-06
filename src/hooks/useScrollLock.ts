@@ -1,4 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from "react";
+
+let lockCount = 0;
+let originalOverflow = "";
 
 /**
  * Hook to lock body scroll when modals are open.
@@ -7,43 +10,29 @@ import { useEffect, useRef } from 'react';
  * Features:
  * - Locks body scroll by adding overflow: hidden
  * - Stores and restores original scroll position
- * - Supports nested modals via ref counting
+ * - Supports nested modals via shared lock counting
  * - Works on both desktop and mobile
+ *
+ * IMPORTANT: Uses module-level state so ALL modal instances share the same
+ * scroll position. This prevents conflicts when multiple modals are open.
  *
  * @param isLocked - Whether scroll should be locked
  */
 export function useScrollLock(isLocked: boolean) {
-  const lockCountRef = useRef(0);
-  const originalOverflowRef = useRef<string>('');
-
   useEffect(() => {
     if (isLocked) {
-      // Increment lock count (for nested modals)
-      lockCountRef.current += 1;
+      lockCount += 1;
 
-      // Only lock on first lock
-      if (lockCountRef.current === 1) {
-        // Store original overflow value
-        originalOverflowRef.current = document.body.style.overflow;
-
-        // Lock scroll
-        document.body.style.overflow = 'hidden';
-
-        // Also prevent scroll on mobile
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
+      if (lockCount === 1) {
+        originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
       }
 
       return () => {
-        // Decrement lock count
-        lockCountRef.current -= 1;
+        lockCount -= 1;
 
-        // Only unlock when all locks are released
-        if (lockCountRef.current === 0) {
-          // Restore original overflow
-          document.body.style.overflow = originalOverflowRef.current;
-          document.body.style.position = '';
-          document.body.style.width = '';
+        if (lockCount === 0) {
+          document.body.style.overflow = originalOverflow;
         }
       };
     }
