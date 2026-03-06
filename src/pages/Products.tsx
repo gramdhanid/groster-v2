@@ -17,7 +17,9 @@ import ConfirmDialog from "../components/ui/ConfirmDialog";
 import SwipeableProductCard from "../components/products/SwipeableProductCard";
 import BarcodeScanner from "../components/products/BarcodeScanner";
 import ProductFilterModal from "../components/filters/ProductFilterModal";
-import SortModal, { type SortOptionValue } from "../components/filters/SortModal";
+import SortModal, {
+  type SortOptionValue,
+} from "../components/filters/SortModal";
 
 import type { Product } from "../types/product";
 import { PRODUCT_CATEGORIES } from "../types/product";
@@ -101,10 +103,13 @@ export default function ProductList() {
 
   // Calculate top 3 categories for quick filter chips
   const top3Categories = useMemo(() => {
-    const counts = products.reduce((acc, p) => {
-      acc[p.category] = (acc[p.category] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const counts = products.reduce(
+      (acc, p) => {
+        acc[p.category] = (acc[p.category] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
@@ -443,10 +448,14 @@ export default function ProductList() {
             ))}
             {filters.stockFilter !== "all" && filters.stockFilter !== "low" && (
               <button
-                onClick={() => setFilters((prev) => ({ ...prev, stockFilter: "all" }))}
+                onClick={() =>
+                  setFilters((prev) => ({ ...prev, stockFilter: "all" }))
+                }
                 className="flex-shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30"
               >
-                {filters.stockFilter === "medium" ? "Stok Sedang" : "Stok Tinggi"}
+                {filters.stockFilter === "medium"
+                  ? "Stok Sedang"
+                  : "Stok Tinggi"}
                 <X size={12} />
               </button>
             )}

@@ -5,16 +5,20 @@ import LowStockAlertTable from "@/components/dashboard/LowStockAlertTable";
 import TopSellingProducts from "@/components/dashboard/TopSellingProducts";
 import SalesTrendChart from "@/components/dashboard/SalesTrendChart";
 import RestockModal from "@/components/dashboard/RestockModal";
+import CashflowCard from "@/components/dashboard/CashflowCard";
+import CashflowModal from "@/components/dashboard/CashflowModal";
 import { useDailyMetrics } from "@/hooks/dashboard/useDailyMetrics";
 import { useLowStockProducts } from "@/hooks/dashboard/useLowStockProducts";
 import { useTopSellingProducts } from "@/hooks/dashboard/useTopSellingProducts";
 import { useSalesTrend } from "@/hooks/dashboard/useSalesTrend";
 import { useSuppliers } from "@/hooks/dashboard/useSuppliers";
+import { useCashflow } from "@/hooks/dashboard/useCashflow";
 import type { TimeFilter } from "@/types/dashboard";
 
 export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('7days');
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [isCashflowModalOpen, setIsCashflowModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Fetch all data using TanStack Query hooks
@@ -23,6 +27,7 @@ export default function Dashboard() {
   const { data: topSellingData, isLoading: topSellingLoading } = useTopSellingProducts();
   const { data: salesTrendData, isLoading: salesTrendLoading } = useSalesTrend(timeFilter);
   const { data: suppliersData } = useSuppliers();
+  const { data: cashflowData, isLoading: cashflowLoading } = useCashflow();
 
   const isLoading = dailyLoading || lowStockLoading || topSellingLoading || salesTrendLoading;
 
@@ -71,6 +76,13 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Cashflow Card */}
+      <CashflowCard
+        data={cashflowData}
+        isLoading={cashflowLoading}
+        onClick={() => setIsCashflowModalOpen(true)}
+      />
+
       {/* Sales Trend Chart */}
       {salesTrendData && (
         <SalesTrendChart
@@ -106,6 +118,14 @@ export default function Dashboard() {
           selectedProductId={selectedProductId}
         />
       )}
+
+      {/* Cashflow Modal */}
+      <CashflowModal
+        isOpen={isCashflowModalOpen}
+        onClose={() => setIsCashflowModalOpen(false)}
+        data={cashflowData}
+        isLoading={cashflowLoading}
+      />
     </div>
   );
 }
