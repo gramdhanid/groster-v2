@@ -30,50 +30,7 @@ interface BarcodeScannerProps {
 }
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 const FRAME_SKIP = isMobile ? 3 : 1;
-
-// ============================================================
-// DEBUG PANEL — HAPUS SEMUA BAGIAN INI SETELAH SELESAI DEBUG
-// ============================================================
-interface DebugLog {
-  time: string;
-  level: "info" | "warn" | "error" | "success";
-  msg: string;
-}
-
-function DebugPanel({ logs }: { logs: DebugLog[] }) {
-  const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [logs]);
-
-  const colorMap = {
-    info: "text-slate-300",
-    warn: "text-yellow-400",
-    error: "text-red-400",
-    success: "text-green-400",
-  };
-
-  return (
-    <div className="mt-3 bg-black rounded-lg p-2 max-h-48 overflow-y-auto font-mono text-xs border border-slate-700">
-      <p className="text-slate-500 mb-1">
-        === DEBUG LOG ({isIOS ? "iOS" : "Android"}) ===
-      </p>
-      {logs.length === 0 && (
-        <p className="text-slate-600">Menunggu inisialisasi...</p>
-      )}
-      {logs.map((log, i) => (
-        <div key={i} className={colorMap[log.level]}>
-          <span className="text-slate-600">[{log.time}]</span> {log.msg}
-        </div>
-      ))}
-      <div ref={bottomRef} />
-    </div>
-  );
-}
-// ============================================================
 
 export default function BarcodeScanner({
   isOpen,
@@ -83,6 +40,11 @@ export default function BarcodeScanner({
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Bridge image element untuk iOS ZXing decode
+  // ZXing@0.21.3 tidak punya decodeFromCanvas,
+  // method yang ada: decodeFromImageElement(HTMLImageElement)
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const readerRef = useRef<BrowserMultiFormatReader | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -98,25 +60,11 @@ export default function BarcodeScanner({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  // Torch hanya tampil jika capabilities.torch === true
+  // Android Huawei Mate 20 Pro: torch tidak di-expose browser → tombol tidak muncul (by design)
   const [torchAvailable, setTorchAvailable] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
   const [usingNativeApi, setUsingNativeApi] = useState(false);
-
-  // DEBUG STATE — hapus setelah selesai debug
-  const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
-
-  const addLog = useCallback(
-    (msg: string, level: DebugLog["level"] = "info") => {
-      const now = new Date();
-      const time = `${now.getHours().toString().padStart(2, "0")}:${now
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
-      setDebugLogs((prev) => [...prev.slice(-50), { time, level, msg }]); // max 50 baris
-      console.log(`[${level.toUpperCase()}] ${msg}`);
-    },
-    [],
-  );
 
   const onScanRef = useRef(onScan);
   const onCloseRef = useRef(onClose);
@@ -160,37 +108,24 @@ export default function BarcodeScanner({
     setUsingNativeApi(false);
   }, []);
 
-  const checkTorchAvailability = useCallback(
-    (stream: MediaStream) => {
-      try {
-        const track = stream.getVideoTracks()[0];
-        if (!track) {
-          addLog("No video track found", "warn");
-          return;
-        }
+  const checkTorchAvailability = useCallback((stream: MediaStream) => {
+    try {
+      const track = stream.getVideoTracks()[0];
+      if (!track) return;
 
-        const capabilities =
-          track.getCapabilities() as MediaTrackCapabilities & {
-            torch?: boolean;
-          };
+      const capabilities = track.getCapabilities() as MediaTrackCapabilities & {
+        torch?: boolean;
+      };
 
-        addLog(`Capabilities raw: ${JSON.stringify(capabilities)}`, "info");
+      // Harus strict === true, bukan hanya "ada di object"
+      // Android Huawei: "torch" tidak ada di capabilities sama sekali → false
+      const hasTorch = "torch" in capabilities && capabilities.torch === true;
 
-        const hasTorch =
-          "torch" in capabilities && capabilities.torch !== undefined;
-
-        addLog(`torch in capabilities: ${"torch" in capabilities}`, "info");
-        addLog(`capabilities.torch value: ${capabilities.torch}`, "info");
-        addLog(`hasTorch result: ${hasTorch}`, hasTorch ? "success" : "warn");
-
-        setTorchAvailable(hasTorch);
-      } catch (err) {
-        addLog(`getCapabilities() error: ${err}`, "error");
-        setTorchAvailable(false);
-      }
-    },
-    [addLog],
-  );
+      setTorchAvailable(hasTorch);
+    } catch {
+      setTorchAvailable(false);
+    }
+  }, []);
 
   const toggleTorch = useCallback(async () => {
     if (!streamRef.current) return;
@@ -200,31 +135,28 @@ export default function BarcodeScanner({
       if (!track) return;
 
       const newState = !torchOn;
-      addLog(`Trying torch: ${newState}`, "info");
 
       try {
         await track.applyConstraints({
-          advanced: [{ torch: newState }] as unknown as MediaTrackConstraintSet[],
+          advanced: [
+            { torch: newState },
+          ] as unknown as MediaTrackConstraintSet[],
         });
-        addLog(`Torch via advanced constraint: OK`, "success");
         setTorchOn(newState);
-      } catch (e1) {
-        addLog(`advanced constraint failed: ${e1}`, "warn");
+      } catch {
         try {
           await (track.applyConstraints as Function)({ torch: newState });
-          addLog(`Torch via direct constraint: OK`, "success");
           setTorchOn(newState);
-        } catch (e2) {
-          addLog(`direct constraint failed: ${e2}`, "error");
+        } catch {
           setTorchAvailable(false);
         }
       }
-    } catch (err) {
-      addLog(`toggleTorch error: ${err}`, "error");
+    } catch {
       setTorchAvailable(false);
     }
-  }, [torchOn, addLog]);
+  }, [torchOn]);
 
+  // Android: Native BarcodeDetector via canvas (confirmed working)
   const scanWithNativeAPI = useCallback(
     (video: HTMLVideoElement) => {
       if (!isScanningRef.current || !barcodeDetectorRef.current) return;
@@ -264,7 +196,6 @@ export default function BarcodeScanner({
         .detect(canvas)
         .then((barcodes) => {
           if (barcodes.length > 0 && barcodes[0].rawValue) {
-            addLog(`Native API scanned: ${barcodes[0].rawValue}`, "success");
             isScanningRef.current = false;
             const code = barcodes[0].rawValue;
             cleanupScanner();
@@ -276,16 +207,25 @@ export default function BarcodeScanner({
             scanWithNativeAPI(video),
           );
         })
-        .catch((err) => {
-          addLog(`Native API detect error: ${err}`, "error");
+        .catch(() => {
           requestAnimationFrameRef.current = requestAnimationFrame(() =>
             scanWithNativeAPI(video),
           );
         });
     },
-    [cleanupScanner, addLog],
+    [cleanupScanner],
   );
 
+  // iOS: ZXing via HTMLImageElement bridge
+  //
+  // Masalah: ZXing@0.21.3 tidak punya decodeFromCanvas (method itu tidak exist)
+  // Solusi: canvas.toDataURL → set ke <img src> → decode via decodeFromImageElement
+  //
+  // Flow per frame:
+  // 1. drawImage(video) ke canvas
+  // 2. canvas.toDataURL("image/jpeg") → dataUrl
+  // 3. img.src = dataUrl → trigger img.onload
+  // 4. onload: decodeFromImageElement(img) → dapat Result atau throw NotFoundException
   const scanWithZXing = useCallback(
     (video: HTMLVideoElement) => {
       if (!isScanningRef.current || !readerRef.current) return;
@@ -306,7 +246,14 @@ export default function BarcodeScanner({
       }
 
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      const img = imgRef.current;
+
+      if (!canvas || !img) {
+        requestAnimationFrameRef.current = requestAnimationFrame(() =>
+          scanWithZXing(video),
+        );
+        return;
+      }
 
       if (
         canvas.width !== video.videoWidth ||
@@ -317,35 +264,54 @@ export default function BarcodeScanner({
       }
 
       const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      let result: Result | null = null;
-      try {
-        // @ts-ignore - decodeFromCanvas exists but not in TypeScript defs
-        result = readerRef.current.decodeFromCanvas(canvas);
-      } catch (err) {
-        if (!(err instanceof NotFoundException)) {
-          addLog(`ZXing error: ${err}`, "error");
-        }
-      }
-
-      if (result) {
-        addLog(`ZXing scanned: ${result.getText()}`, "success");
-        isScanningRef.current = false;
-        const code = result.getText();
-        cleanupScanner();
-        onScanRef.current(code);
-        onCloseRef.current();
+      if (!ctx) {
+        requestAnimationFrameRef.current = requestAnimationFrame(() =>
+          scanWithZXing(video),
+        );
         return;
       }
 
-      requestAnimationFrameRef.current = requestAnimationFrame(() =>
-        scanWithZXing(video),
-      );
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // JPEG lebih cepat dari PNG untuk mobile
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+      img.onload = () => {
+        if (!isScanningRef.current || !readerRef.current) return;
+
+        let result: Result | null = null;
+        try {
+          // @ts-ignore - decodeFromCanvas exists but not in TypeScript defs
+          result = readerRef.current.decodeFromImageElement(img);
+        } catch (err) {
+          if (!(err instanceof NotFoundException)) {
+            console.debug("ZXing decode error:", err);
+          }
+        }
+
+        if (result) {
+          isScanningRef.current = false;
+          const code = result.getText();
+          cleanupScanner();
+          onScanRef.current(code);
+          onCloseRef.current();
+          return;
+        }
+
+        requestAnimationFrameRef.current = requestAnimationFrame(() =>
+          scanWithZXing(video),
+        );
+      };
+
+      img.onerror = () => {
+        requestAnimationFrameRef.current = requestAnimationFrame(() =>
+          scanWithZXing(video),
+        );
+      };
+
+      img.src = dataUrl;
     },
-    [cleanupScanner, addLog],
+    [cleanupScanner],
   );
 
   useEffect(() => {
@@ -355,7 +321,6 @@ export default function BarcodeScanner({
     setError(null);
     setCameraActive(false);
     setTorchOn(false);
-    setDebugLogs([]); // reset log tiap buka
 
     const initTimer = setTimeout(async () => {
       if (
@@ -371,22 +336,11 @@ export default function BarcodeScanner({
       isScanningRef.current = true;
       frameCountRef.current = 0;
 
-      addLog(`Device: ${isIOS ? "iOS" : "Android"}`, "info");
-      addLog(`UserAgent: ${navigator.userAgent.slice(0, 80)}`, "info");
-
       try {
-        // Cek Native BarcodeDetector
-        addLog(
-          `BarcodeDetector in window: ${"BarcodeDetector" in window}`,
-          "info",
-        );
-
         if ("BarcodeDetector" in window) {
           try {
             // @ts-ignore
             const supported = await BarcodeDetector.getSupportedFormats();
-            addLog(`Supported formats: ${supported.join(", ")}`, "info");
-
             const targetFormats = [
               "ean_13",
               "ean_8",
@@ -397,8 +351,6 @@ export default function BarcodeScanner({
               "qr_code",
             ].filter((f) => supported.includes(f));
 
-            addLog(`Matched formats: ${targetFormats.join(", ")}`, "info");
-
             if (targetFormats.length > 0) {
               // @ts-ignore
               barcodeDetectorRef.current = new BarcodeDetector({
@@ -406,16 +358,12 @@ export default function BarcodeScanner({
               });
               useNativeApiRef.current = true;
               setUsingNativeApi(true);
-              addLog("Using Native BarcodeDetector", "success");
             }
-          } catch (e) {
-            addLog(`Native BarcodeDetector init failed: ${e}`, "warn");
+          } catch {
+            // fallback ke ZXing
           }
-        } else {
-          addLog("Native BarcodeDetector NOT available, using ZXing", "warn");
         }
 
-        // Setup ZXing
         const hints = new Map();
         hints.set(DecodeHintType.POSSIBLE_FORMATS, [
           BarcodeFormat.EAN_13,
@@ -428,18 +376,9 @@ export default function BarcodeScanner({
         ]);
         hints.set(DecodeHintType.TRY_HARDER, true);
         readerRef.current = new BrowserMultiFormatReader(hints);
-        addLog("ZXing reader initialized", "info");
 
-        // Enumerate cameras
         const devices = await navigator.mediaDevices.enumerateDevices();
         const videoDevices = devices.filter((d) => d.kind === "videoinput");
-        addLog(`Camera count: ${videoDevices.length}`, "info");
-        videoDevices.forEach((d, i) =>
-          addLog(
-            `  Cam[${i}]: ${d.label || "(no label)"} | ${d.deviceId.slice(0, 12)}`,
-            "info",
-          ),
-        );
 
         if (videoDevices.length === 0) throw new Error("No camera found");
 
@@ -452,11 +391,6 @@ export default function BarcodeScanner({
               label.includes("rear")
             );
           }) || videoDevices[videoDevices.length - 1];
-
-        addLog(
-          `Selected camera: ${backCamera.label || backCamera.deviceId.slice(0, 12)}`,
-          "info",
-        );
 
         const resolution = isMobile
           ? { width: { ideal: 1280 }, height: { ideal: 720 } }
@@ -473,15 +407,6 @@ export default function BarcodeScanner({
         });
 
         streamRef.current = stream;
-        addLog("Camera stream acquired", "success");
-
-        const vTrack = stream.getVideoTracks()[0];
-        const settings = vTrack.getSettings();
-        addLog(
-          `Stream resolution: ${settings.width}x${settings.height}`,
-          "info",
-        );
-
         checkTorchAvailability(stream);
 
         if (videoRef.current) {
@@ -494,21 +419,15 @@ export default function BarcodeScanner({
             if (!videoRef.current) return reject(new Error("Video ref lost"));
 
             videoRef.current.onloadedmetadata = async () => {
-              addLog("Video metadata loaded", "info");
               try {
                 await videoRef.current!.play();
-                addLog("Video playing", "success");
                 resolve();
               } catch (err) {
-                addLog(`Video play error: ${err}`, "error");
                 reject(err);
               }
             };
 
-            setTimeout(() => {
-              addLog("Metadata timeout fallback triggered", "warn");
-              resolve();
-            }, 3000);
+            setTimeout(() => resolve(), 3000);
           });
 
           setCameraActive(true);
@@ -516,17 +435,14 @@ export default function BarcodeScanner({
           setError(null);
 
           if (useNativeApiRef.current && barcodeDetectorRef.current) {
-            addLog("Starting Native API scan loop", "info");
             scanWithNativeAPI(videoRef.current);
           } else {
-            addLog("Starting ZXing scan loop", "info");
             scanWithZXing(videoRef.current);
           }
         }
       } catch (err: unknown) {
-        addLog(`INIT ERROR: ${err}`, "error");
-
         let errorMsg = "Gagal mengakses kamera.";
+
         if (err instanceof Error) {
           const msg = err.message.toLowerCase();
           if (
@@ -550,6 +466,7 @@ export default function BarcodeScanner({
         setIsLoading(false);
         isScanningRef.current = false;
         isInitializedRef.current = false;
+        console.error("Scanner error:", err);
       }
     }, 150);
 
@@ -564,7 +481,6 @@ export default function BarcodeScanner({
     scanWithNativeAPI,
     scanWithZXing,
     checkTorchAvailability,
-    addLog,
   ]);
 
   useEffect(() => {
@@ -578,7 +494,7 @@ export default function BarcodeScanner({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl overflow-y-auto max-h-screen">
+      <div className="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 hover:bg-slate-800 rounded-lg transition-colors"
@@ -623,7 +539,11 @@ export default function BarcodeScanner({
               playsInline
               autoPlay
             />
+            {/* Canvas: offscreen frame capture */}
             <canvas ref={canvasRef} className="hidden" />
+            {/* Img bridge: iOS ZXing decodeFromImageElement */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img ref={imgRef} className="hidden" alt="" />
           </div>
 
           {cameraActive && torchAvailable && (
@@ -659,9 +579,6 @@ export default function BarcodeScanner({
             <span className="text-xs text-slate-500">• Lebih cepat</span>
           </div>
         )}
-
-        {/* DEBUG PANEL — HAPUS SETELAH SELESAI */}
-        <DebugPanel logs={debugLogs} />
 
         <div className="mt-4 p-3 bg-slate-800/50 rounded-lg border border-slate-800">
           <p className="text-xs text-slate-400">
