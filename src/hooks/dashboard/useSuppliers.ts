@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import type { Supplier } from '@/types/restock';
+import { useQuery } from "@tanstack/react-query";
+import type { Supplier } from "@/types/restock";
 
 /**
  * Hook for fetching supplier data
@@ -23,26 +23,26 @@ import type { Supplier } from '@/types/restock';
  */
 export const useSuppliers = () => {
   return useQuery({
-    queryKey: ['suppliers'],
+    queryKey: ["suppliers"],
     queryFn: async (): Promise<Supplier[]> => {
       // DUMMY DATA - Replace with Supabase query when ready
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       return [
         {
-          id: 'sup-1',
-          supplierName: 'CV. Maju Jaya',
-          phoneNumber: '6281234567890',
+          id: "sup-1",
+          supplierName: "CV. Maju Jaya",
+          phoneNumber: "6289664438372",
         },
         {
-          id: 'sup-2',
-          supplierName: 'Toko Grosir Sumber Rejeki',
-          phoneNumber: '6289876543210',
+          id: "sup-2",
+          supplierName: "Toko Grosir Sumber Rejeki",
+          phoneNumber: "6289664438372",
         },
         {
-          id: 'sup-3',
-          supplierName: 'UD. Berkah Abadi',
-          phoneNumber: '6285678901234',
+          id: "sup-3",
+          supplierName: "UD. Berkah Abadi",
+          phoneNumber: "6289664438372",
         },
       ];
     },

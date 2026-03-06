@@ -112,14 +112,14 @@ Terima kasih.`;
     <BottomSheetModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Restock Order"
+      title="Pesanan Restock"
       icon={<Package size={20} />}
       size="md"
       bodyClassName="p-6"
       footer={
         <>
           {/* Order Summary */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-sm text-slate-400">Total Estimasi:</span>
             <span className="text-2xl font-black text-primary">
               {formatCurrency(totalCost)}
@@ -132,7 +132,7 @@ Terima kasih.`;
               onClick={onClose}
               className="flex-1 py-3.5 rounded-xl font-bold bg-slate-800 text-slate-400 hover:bg-slate-700 border-0"
             >
-              Cancel
+              Batal
             </Button>
             <Button
               onClick={handleSendWhatsApp}
@@ -140,7 +140,7 @@ Terima kasih.`;
               className="flex-1 py-3.5 rounded-xl font-bold bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <MessageCircle size={18} />
-              Send via WhatsApp
+              Kirim via WhatsApp
             </Button>
           </div>
         </>
@@ -172,7 +172,7 @@ Terima kasih.`;
       <section>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-            Items to Restock
+            Pesanan
           </h3>
           <span
             className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -181,7 +181,7 @@ Terima kasih.`;
                 : "bg-slate-800 text-slate-500"
             }`}
           >
-            {selectedCount} / {orderItems.length} selected
+            {selectedCount} / {orderItems.length} barang dipilih
           </span>
         </div>
 
@@ -189,31 +189,37 @@ Terima kasih.`;
           {orderItems.map((item) => (
             <div
               key={item.productId}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+              onClick={() => handleToggleItem(item.productId)}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
                 item.selected
                   ? "bg-primary/5 border-primary/20"
                   : "bg-slate-900/50 border-slate-800 opacity-60"
               }`}
             >
-              <Checkbox
-                checked={item.selected}
-                onCheckedChange={() => handleToggleItem(item.productId)}
-                className="border-slate-600"
-              />
+              <div onClick={(e) => e.stopPropagation()}>
+                <Checkbox
+                  checked={item.selected}
+                  onCheckedChange={() => handleToggleItem(item.productId)}
+                  className="border-slate-600"
+                />
+              </div>
 
               <div className="flex-1 min-w-0">
                 <div className="font-bold text-sm truncate">
                   {item.productName}
                 </div>
                 <div className="text-xs text-slate-500">
-                  Stock: {item.currentStock} / Min: {item.minimumStock}
+                  Stok: {item.currentStock} / Min: {item.minimumStock}
                 </div>
                 <div className="text-xs text-primary">
                   {formatCurrency(item.lastPurchasePrice)} / pcs
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div
+                className="flex items-center gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <input
                   type="number"
                   value={item.quantity}
