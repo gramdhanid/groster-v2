@@ -1,4 +1,5 @@
 import { AlertTriangle, Info, AlertCircle } from "lucide-react";
+import { useModalBackButton } from "@/hooks/useModalBackButton";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -45,6 +46,9 @@ export default function ConfirmDialog({
   cancelText = "Batal",
   variant = "warning",
 }: ConfirmDialogProps) {
+  // Handle mobile back button
+  useModalBackButton({ isOpen, onClose });
+
   if (!isOpen) return null;
 
   const config = variantConfig[variant];

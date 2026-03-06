@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { useSwipeToDismiss } from '@/hooks/useSwipeToDismiss';
+import { useModalBackButton } from '@/hooks/useModalBackButton';
 
 export interface BottomSheetModalProps {
   /** Whether the modal is open */
@@ -73,6 +74,9 @@ export function BottomSheetModal({
 }: BottomSheetModalProps) {
   // Lock body scroll when modal is open
   useScrollLock(isOpen);
+
+  // Handle mobile back button
+  useModalBackButton({ isOpen, onClose });
 
   // Setup swipe-to-dismiss
   const { handlers, style, contentRef, onScroll } = useSwipeToDismiss({
