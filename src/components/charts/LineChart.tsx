@@ -136,17 +136,28 @@ export default function LineChart({
                   const cursorTop = u.cursor.top ?? 0;
 
                   // Calculate position for indicator line and circle
-                  const bbox = (u.root?.firstElementChild as HTMLElement)?.getBoundingClientRect();
+                  const bbox = (
+                    u.root?.firstElementChild as HTMLElement
+                  )?.getBoundingClientRect();
                   if (bbox) {
+                    // Adjust the calculation of xPos to account for the offset issue
+                    const xPos =
+                      u.valToPos(xVal, "x", false) -
+                      (bbox.left - u.root.getBoundingClientRect().left);
+
                     // Update indicator line position
                     if (indicatorLineRef.current) {
-                      indicatorLineRef.current.style.left = `${cursorLeft}px`;
+                      indicatorLineRef.current.style.left = `${xPos}px`;
                     }
 
                     // Update circle indicator position at the data point
                     if (circleIndicatorRef.current && yVal != null) {
-                      const yPos = u.valToPos(yVal, "y", true);
-                      circleIndicatorRef.current.style.left = `${cursorLeft}px`;
+                      // Adjust the calculation of yPos to account for the offset issue
+                      const yPos =
+                        u.valToPos(yVal, "y", false) -
+                        (bbox.top - u.root.getBoundingClientRect().top);
+
+                      circleIndicatorRef.current.style.left = `${xPos}px`;
                       circleIndicatorRef.current.style.top = `${yPos}px`;
                     }
 
