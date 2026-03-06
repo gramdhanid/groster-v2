@@ -25,6 +25,7 @@ export interface LowStockProduct {
   minimumStock: number;
   category: string;
   barcode?: string;
+  lastPurchasePrice: number;
 }
 
 export type StockStatus = 'critical' | 'low' | 'ok';

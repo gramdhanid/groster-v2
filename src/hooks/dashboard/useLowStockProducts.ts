@@ -38,6 +38,7 @@ export const useLowStockProducts = () => {
           minimumStock: 10,
           category: 'Minuman',
           barcode: '8991234567890',
+          lastPurchasePrice: 1500,
         },
         {
           id: '2',
@@ -46,6 +47,7 @@ export const useLowStockProducts = () => {
           minimumStock: 5,
           category: 'Sembako',
           barcode: '8991234567891',
+          lastPurchasePrice: 12500,
         },
         {
           id: '3',
@@ -54,6 +56,7 @@ export const useLowStockProducts = () => {
           minimumStock: 8,
           category: 'Sembako',
           barcode: '8991234567892',
+          lastPurchasePrice: 16000,
         },
         {
           id: '4',
@@ -62,6 +65,7 @@ export const useLowStockProducts = () => {
           minimumStock: 12,
           category: 'Minuman',
           barcode: '8991234567893',
+          lastPurchasePrice: 3500,
         },
         {
           id: '5',
@@ -70,6 +74,7 @@ export const useLowStockProducts = () => {
           minimumStock: 15,
           category: 'Mie Instan',
           barcode: '8991234567894',
+          lastPurchasePrice: 3500,
         },
       ];
     },

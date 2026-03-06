@@ -4,22 +4,32 @@ import DailySnapshotCard from "@/components/dashboard/DailySnapshotCard";
 import LowStockAlertTable from "@/components/dashboard/LowStockAlertTable";
 import TopSellingProducts from "@/components/dashboard/TopSellingProducts";
 import SalesTrendChart from "@/components/dashboard/SalesTrendChart";
+import RestockModal from "@/components/dashboard/RestockModal";
 import { useDailyMetrics } from "@/hooks/dashboard/useDailyMetrics";
 import { useLowStockProducts } from "@/hooks/dashboard/useLowStockProducts";
 import { useTopSellingProducts } from "@/hooks/dashboard/useTopSellingProducts";
 import { useSalesTrend } from "@/hooks/dashboard/useSalesTrend";
+import { useSuppliers } from "@/hooks/dashboard/useSuppliers";
 import type { TimeFilter } from "@/types/dashboard";
 
 export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('7days');
+  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Fetch all data using TanStack Query hooks
   const { data: dailyData, isLoading: dailyLoading } = useDailyMetrics();
   const { data: lowStockData, isLoading: lowStockLoading } = useLowStockProducts();
   const { data: topSellingData, isLoading: topSellingLoading } = useTopSellingProducts();
   const { data: salesTrendData, isLoading: salesTrendLoading } = useSalesTrend(timeFilter);
+  const { data: suppliersData } = useSuppliers();
 
   const isLoading = dailyLoading || lowStockLoading || topSellingLoading || salesTrendLoading;
+
+  const handleRestockClick = (productId: string) => {
+    setIsRestockModalOpen(true);
+    setSelectedProductId(productId);
+  };
 
   // Show loading state
   if (isLoading && !dailyData) {
@@ -76,10 +86,7 @@ export default function Dashboard() {
         {lowStockData && (
           <LowStockAlertTable
             products={lowStockData}
-            onRestock={(productId) => {
-              // TODO: Implement restock flow
-              console.log('Restock product:', productId);
-            }}
+            onRestock={handleRestockClick}
           />
         )}
 
@@ -88,6 +95,17 @@ export default function Dashboard() {
           <TopSellingProducts products={topSellingData} />
         )}
       </div>
+
+      {/* Restock Modal */}
+      {lowStockData && suppliersData && (
+        <RestockModal
+          isOpen={isRestockModalOpen}
+          onClose={() => setIsRestockModalOpen(false)}
+          lowStockItems={lowStockData}
+          suppliers={suppliersData}
+          selectedProductId={selectedProductId}
+        />
+      )}
     </div>
   );
 }
