@@ -122,13 +122,8 @@ export default function LineChart({
                 const yVal = yData[idx];
                 if (xVal == null || yVal == null) return;
 
-                // u.cursor.left/top = posisi relatif ke u-over (area plot)
-                // u-over sendiri punya offset dari containerRef karena Y-axis label
-                // Kita perlu tambahkan offset canvas agar koordinat benar relatif ke wrapper
-                const cursorLeft = u.cursor.left ?? 0;
-                const cursorTop = u.cursor.top ?? 0;
-
-                // Hitung offset canvas (u-over) relatif ke containerRef
+                // Hitung offset u-over relatif ke containerRef
+                // u-over = area plot interaktif, punya offset karena Y-axis label di kiri
                 const containerEl = containerRef.current;
                 const over = u.root.querySelector<HTMLElement>(".u-over");
                 let canvasOffsetLeft = 0;
@@ -140,9 +135,12 @@ export default function LineChart({
                   canvasOffsetTop = overRect.top - containerRect.top;
                 }
 
-                // Final position relatif ke wrapper div (tempat overlay di-render)
-                const xPos = cursorLeft + canvasOffsetLeft;
-                const yPos = cursorTop + canvasOffsetTop;
+                // X: pakai cursor.left — ini snap ke data point, relatif ke u-over
+                const xPos = (u.cursor.left ?? 0) + canvasOffsetLeft;
+
+                // Y: JANGAN pakai cursor.top — itu ikut posisi mouse, bukan nilai data
+                // valToPos(false) = koordinat relatif ke u-over plot area
+                const yPos = u.valToPos(yVal, "y", false) + canvasOffsetTop;
 
                 // Update indicator line
                 if (indicatorLineRef.current) {
@@ -163,7 +161,6 @@ export default function LineChart({
                   {
                     day: "numeric",
                     month: "short",
-                    year: "numeric",
                   },
                 );
                 const valueStr = formatValue
