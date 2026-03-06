@@ -204,7 +204,7 @@ export default function BarcodeScanner({
 
       try {
         await track.applyConstraints({
-          advanced: [{ torch: newState }] as MediaTrackConstraintSet[],
+          advanced: [{ torch: newState }] as unknown as MediaTrackConstraintSet[],
         });
         addLog(`Torch via advanced constraint: OK`, "success");
         setTorchOn(newState);
@@ -323,6 +323,7 @@ export default function BarcodeScanner({
 
       let result: Result | null = null;
       try {
+        // @ts-ignore - decodeFromCanvas exists but not in TypeScript defs
         result = readerRef.current.decodeFromCanvas(canvas);
       } catch (err) {
         if (!(err instanceof NotFoundException)) {
