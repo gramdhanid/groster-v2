@@ -40,6 +40,11 @@ export default function ProductDetailModal({
   const status = getStatus();
   const stockNeeded = Math.max(0, product.minimumStock - product.currentStock);
 
+  const secondaryButton: ModalButton = {
+    label: "Batal",
+    onClick: onClose,
+  };
+
   const primaryButton: ModalButton = {
     label: "Restok",
     onClick: () => {
@@ -57,6 +62,7 @@ export default function ProductDetailModal({
       icon={<Package size={20} />}
       size="md"
       bodyClassName="p-6"
+      secondaryButton={secondaryButton}
       primaryButton={primaryButton}
     >
       <div className="space-y-6">
