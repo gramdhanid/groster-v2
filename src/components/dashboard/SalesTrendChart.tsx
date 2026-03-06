@@ -74,16 +74,16 @@ export default function SalesTrendChart({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <CardTitle className="flex items-center gap-2 text-white">
             <TrendingUp className="text-primary" size={20} />
-            Sales Trend Analysis
+            Analisis Tren Penjualan
           </CardTitle>
-          <div className="flex flex-wrap gap-5">
+          <div className="flex w-full sm:w-auto flex-wrap items-end gap-1.5 sm:gap-3">
             {/* Time Filter Dropdown */}
             <Select
               value={currentTimeFilter}
               onValueChange={(value) => onTimeFilterChange(value as TimeFilter)}
             >
-              <SelectTrigger className="w-[140px] bg-slate-800 border-slate-700 text-white">
-                <SelectValue placeholder="Pilih periode" />
+              <SelectTrigger className="flex-1 sm:w-[140px] bg-slate-800 border-slate-700 text-white text-xs sm:text-sm">
+                <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent>
                 {timeFilters.map((filter) => (
@@ -99,8 +99,8 @@ export default function SalesTrendChart({
               value={selectedMetric}
               onValueChange={(value) => setSelectedMetric(value as SalesMetric)}
             >
-              <SelectTrigger className="w-[140px] bg-slate-800 border-slate-700 text-white">
-                <SelectValue placeholder="Pilih metrik" />
+              <SelectTrigger className="flex-1 sm:w-[140px] bg-slate-800 border-slate-700 text-white text-xs sm:text-sm">
+                <SelectValue placeholder="Metrik" />
               </SelectTrigger>
               <SelectContent>
                 {metrics.map((metric) => (
