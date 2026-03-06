@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/format';
 import type { RestockModalProps, RestockOrderItem } from '@/types/restock';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 export default function RestockModal({
   isOpen,
@@ -19,6 +20,9 @@ export default function RestockModal({
   suppliers,
   selectedProductId,
 }: RestockModalProps) {
+  // Lock body scroll when modal is open
+  useScrollLock(isOpen);
+
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
   const [orderItems, setOrderItems] = useState<RestockOrderItem[]>([]);
 

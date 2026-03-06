@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { useKeyboardHeight } from "../../hooks/useKeyboardHeight";
+import { useScrollLock } from "../../hooks/useScrollLock";
 import type { Product, ProductUnit } from "../../types/product";
 import { PRODUCT_CATEGORIES } from "../../types/product";
 import ConfirmDialog from "../ui/ConfirmDialog";
@@ -33,6 +34,9 @@ export default function ProductModal({
   onSave,
   initialData,
 }: ProductModalProps) {
+  // Lock body scroll when modal is open
+  useScrollLock(isOpen);
+
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState("");

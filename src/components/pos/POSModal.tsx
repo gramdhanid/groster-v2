@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Trash2, Plus, Minus } from 'lucide-react';
 import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
+import { useScrollLock } from '../../hooks/useScrollLock';
 import { formatCurrency } from '../../utils/format';
 import { useCartStore } from '../../store/useCartStore';
 import CheckoutFlow from './CheckoutFlow';
@@ -44,6 +45,8 @@ type Step = 'CART' | 'CHECKOUT' | 'RECEIPT';
 export default function POSModal({ isOpen, onClose }: POSModalProps) {
     const { items, addItem, updateQty, updateUnit, removeItem, clearCart, getTotal } = useCartStore();
     const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
+    // Lock body scroll when modal is open
+    useScrollLock(isOpen);
 
     const [step, setStep] = useState<Step>('CART');
     const [search, setSearch] = useState('');

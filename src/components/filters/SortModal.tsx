@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 export type SortOptionValue =
   | "name-asc"
@@ -35,6 +36,9 @@ export default function SortModal({
   onSortSelect,
   currentSort,
 }: SortModalProps) {
+  // Lock body scroll when modal is open
+  useScrollLock(isOpen);
+
   const handleSortSelect = (sortBy: SortOptionValue) => {
     onSortSelect(sortBy);
     onClose();

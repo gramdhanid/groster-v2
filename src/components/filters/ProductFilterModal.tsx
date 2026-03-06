@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { X, Filter, ChevronRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import CategorySelectorModal from "./CategorySelectorModal";
 import type { ProductFilters, StockFilterOption } from "@/types/filter";
 import type { Product } from "@/types/product";
@@ -64,6 +65,9 @@ export default function ProductFilterModal({
   products,
   allCategories,
 }: ProductFilterModalProps) {
+  // Lock body scroll when modal is open
+  useScrollLock(isOpen);
+
   // Local state for unsaved changes
   const [localFilters, setLocalFilters] = useState(currentFilters);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
