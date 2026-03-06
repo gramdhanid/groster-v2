@@ -27,7 +27,7 @@ export default function Dashboard() {
   // Fetch all data using TanStack Query hooks
   const { data: dailyData, isLoading: dailyLoading } = useDailyMetrics();
   const { data: lowStockData, isLoading: lowStockLoading } = useLowStockProducts();
-  const { data: topSellingData, isLoading: topSellingLoading } = useTopSellingProducts();
+  const { data: topSellingData, isLoading: topSellingLoading } = useTopSellingProducts(5, timeFilter);
   const { data: salesTrendData, isLoading: salesTrendLoading } = useSalesTrend(timeFilter);
   const { data: suppliersData } = useSuppliers();
   const { data: cashflowData, isLoading: cashflowLoading } = useCashflow();
@@ -112,7 +112,11 @@ export default function Dashboard() {
 
         {/* Top Selling Products */}
         {topSellingData && (
-          <TopSellingProducts products={topSellingData} />
+          <TopSellingProducts
+            products={topSellingData}
+            currentTimeFilter={timeFilter}
+            onTimeFilterChange={setTimeFilter}
+          />
         )}
       </div>
 

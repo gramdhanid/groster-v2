@@ -1,11 +1,26 @@
-import { Award } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { formatCurrency } from '@/utils/format';
-import type { TopSellingProduct } from '@/types/dashboard';
+import { Award } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatCurrency } from "@/utils/format";
+import type { TopSellingProduct, TimeFilter } from "@/types/dashboard";
+
+const timeFilters: { value: TimeFilter; label: string }[] = [
+  { value: "7days", label: "7 Hari Terakhir" },
+  { value: "30days", label: "30 Hari Terakhir" },
+  { value: "thisMonth", label: "Bulan Ini" },
+];
 
 interface TopSellingProductsProps {
   products: TopSellingProduct[];
+  currentTimeFilter?: TimeFilter;
+  onTimeFilterChange?: (filter: TimeFilter) => void;
 }
 
 /**
@@ -14,17 +29,35 @@ interface TopSellingProductsProps {
  */
 export default function TopSellingProducts({
   products,
+  currentTimeFilter,
+  onTimeFilterChange,
 }: TopSellingProductsProps) {
   return (
     <Card className="bg-[#0f172a] border-slate-800">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <CardTitle className="flex items-center gap-2 text-white">
             <Award className="text-primary" size={20} />
             Produk Terlaris
-          </div>
-          <span className="text-xs text-slate-500 font-normal">Bulan Ini</span>
-        </CardTitle>
+          </CardTitle>
+          {onTimeFilterChange && currentTimeFilter && (
+            <Select
+              value={currentTimeFilter}
+              onValueChange={(value) => onTimeFilterChange(value as TimeFilter)}
+            >
+              <SelectTrigger className="w-full sm:w-[140px] bg-slate-800 border-slate-700 text-white text-xs sm:text-sm">
+                <SelectValue placeholder="Filter" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeFilters.map((filter) => (
+                  <SelectItem key={filter.value} value={filter.value}>
+                    {filter.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {products.length === 0 ? (
