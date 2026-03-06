@@ -5,6 +5,7 @@ import LowStockAlertTable from "@/components/dashboard/LowStockAlertTable";
 import TopSellingProducts from "@/components/dashboard/TopSellingProducts";
 import SalesTrendChart from "@/components/dashboard/SalesTrendChart";
 import RestockModal from "@/components/dashboard/RestockModal";
+import ProductDetailModal from "@/components/dashboard/ProductDetailModal";
 import CashflowCard from "@/components/dashboard/CashflowCard";
 import CashflowModal from "@/components/dashboard/CashflowModal";
 import { useDailyMetrics } from "@/hooks/dashboard/useDailyMetrics";
@@ -13,13 +14,15 @@ import { useTopSellingProducts } from "@/hooks/dashboard/useTopSellingProducts";
 import { useSalesTrend } from "@/hooks/dashboard/useSalesTrend";
 import { useSuppliers } from "@/hooks/dashboard/useSuppliers";
 import { useCashflow } from "@/hooks/dashboard/useCashflow";
-import type { TimeFilter } from "@/types/dashboard";
+import type { TimeFilter, LowStockProduct } from "@/types/dashboard";
 
 export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('7days');
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
   const [isCashflowModalOpen, setIsCashflowModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [selectedDetailProduct, setSelectedDetailProduct] = useState<LowStockProduct | null>(null);
 
   // Fetch all data using TanStack Query hooks
   const { data: dailyData, isLoading: dailyLoading } = useDailyMetrics();
@@ -34,6 +37,11 @@ export default function Dashboard() {
   const handleRestockClick = (productId: string) => {
     setIsRestockModalOpen(true);
     setSelectedProductId(productId);
+  };
+
+  const handleProductDetailClick = (product: LowStockProduct) => {
+    setSelectedDetailProduct(product);
+    setIsDetailModalOpen(true);
   };
 
   // Show loading state
@@ -99,6 +107,7 @@ export default function Dashboard() {
           <LowStockAlertTable
             products={lowStockData}
             onRestock={handleRestockClick}
+            onProductClick={handleProductDetailClick}
           />
         )}
 
@@ -125,6 +134,14 @@ export default function Dashboard() {
         onClose={() => setIsCashflowModalOpen(false)}
         data={cashflowData}
         isLoading={cashflowLoading}
+      />
+
+      {/* Product Detail Modal */}
+      <ProductDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        product={selectedDetailProduct}
+        onRestock={handleRestockClick}
       />
     </div>
   );
