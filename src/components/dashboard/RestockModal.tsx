@@ -1,17 +1,17 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Package, MessageCircle } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useState, useMemo, useEffect } from "react";
+import { Package, MessageCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import { BottomSheetModal } from '@/components/ui/BottomSheetModal';
-import { formatCurrency } from '@/utils/format';
-import type { RestockModalProps, RestockOrderItem } from '@/types/restock';
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { BottomSheetModal } from "@/components/ui/BottomSheetModal";
+import { formatCurrency } from "@/utils/format";
+import type { RestockModalProps, RestockOrderItem } from "@/types/restock";
 
 export default function RestockModal({
   isOpen,
@@ -20,7 +20,7 @@ export default function RestockModal({
   suppliers,
   selectedProductId,
 }: RestockModalProps) {
-  const [selectedSupplierId, setSelectedSupplierId] = useState<string>('');
+  const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [orderItems, setOrderItems] = useState<RestockOrderItem[]>([]);
 
   // Initialize order items with smart defaults when modal opens
@@ -44,7 +44,7 @@ export default function RestockModal({
       });
 
       setOrderItems(sortedItems);
-      setSelectedSupplierId('');
+      setSelectedSupplierId("");
     }
   }, [isOpen, lowStockItems, selectedProductId]);
 
@@ -52,10 +52,7 @@ export default function RestockModal({
   const totalCost = useMemo(() => {
     return orderItems
       .filter((item) => item.selected)
-      .reduce(
-        (sum, item) => sum + item.quantity * item.lastPurchasePrice,
-        0
-      );
+      .reduce((sum, item) => sum + item.quantity * item.lastPurchasePrice, 0);
   }, [orderItems]);
 
   const selectedCount = orderItems.filter((item) => item.selected).length;
@@ -66,8 +63,8 @@ export default function RestockModal({
       prev.map((item) =>
         item.productId === productId
           ? { ...item, selected: !item.selected }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -76,8 +73,8 @@ export default function RestockModal({
       prev.map((item) =>
         item.productId === productId
           ? { ...item, quantity: Math.max(1, quantity) }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -91,8 +88,10 @@ export default function RestockModal({
     const message = `Hallo Pak ${supplier.supplierName}, ingin pesan ulang barang berikut:
 
 ${selectedItems
-  .map((item, index) => `${index + 1}. ${item.productName} - ${item.quantity} pcs`)
-  .join('\n')}
+  .map(
+    (item, index) => `${index + 1}. ${item.productName} - ${item.quantity} pcs`,
+  )
+  .join("\n")}
 
 Total Estimasi : ${formatCurrency(totalCost)}
 
@@ -102,7 +101,7 @@ Terima kasih.`;
     // Encode and open WhatsApp
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/${supplier.phoneNumber}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    window.open(whatsappUrl, "_blank");
 
     onClose();
   };
@@ -116,6 +115,7 @@ Terima kasih.`;
       title="Restock Order"
       icon={<Package size={20} />}
       size="md"
+      bodyClassName="p-6"
       footer={
         <>
           {/* Order Summary */}
@@ -146,19 +146,15 @@ Terima kasih.`;
         </>
       }
     >
-      {/* Header badge for selected count */}
-      {selectedCount > 0 && (
-        <span className="bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded-full inline-block mb-4">
-          {selectedCount} selected
-        </span>
-      )}
-
       {/* Supplier Selection */}
       <section className="mb-6">
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">
           Pilih Supplier
         </h3>
-        <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+        <Select
+          value={selectedSupplierId}
+          onValueChange={setSelectedSupplierId}
+        >
           <SelectTrigger className="bg-slate-800/50 border-slate-700">
             <SelectValue placeholder="Pilih supplier..." />
           </SelectTrigger>
@@ -178,7 +174,13 @@ Terima kasih.`;
           <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
             Items to Restock
           </h3>
-          <span className="text-xs text-slate-500">
+          <span
+            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+              selectedCount > 0
+                ? "bg-primary/20 text-primary"
+                : "bg-slate-800 text-slate-500"
+            }`}
+          >
             {selectedCount} / {orderItems.length} selected
           </span>
         </div>
@@ -189,8 +191,8 @@ Terima kasih.`;
               key={item.productId}
               className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
                 item.selected
-                  ? 'bg-primary/5 border-primary/20'
-                  : 'bg-slate-900/50 border-slate-800 opacity-60'
+                  ? "bg-primary/5 border-primary/20"
+                  : "bg-slate-900/50 border-slate-800 opacity-60"
               }`}
             >
               <Checkbox
@@ -218,7 +220,7 @@ Terima kasih.`;
                   onChange={(e) =>
                     handleQuantityChange(
                       item.productId,
-                      parseInt(e.target.value) || 0
+                      parseInt(e.target.value) || 0,
                     )
                   }
                   disabled={!item.selected}
