@@ -128,7 +128,7 @@ export default function BarcodeScanner({
       const capabilities = track.getCapabilities();
 
       // Check if torch is supported
-      if (!('torch' in capabilities) || !capabilities.torch) {
+      if (!("torch" in capabilities) || !capabilities.torch) {
         setTorchAvailable(false);
         return;
       }
@@ -139,18 +139,18 @@ export default function BarcodeScanner({
       try {
         // Format 1: Standard advanced constraint (works on iOS)
         await track.applyConstraints({
-          advanced: [{ torch: newState }]
+          advanced: [{ torch: newState }] as any,
         });
         setTorchOn(newState);
       } catch (e) {
         // Format 2: Direct constraint (some Android versions)
         try {
           await track.applyConstraints({
-            torch: newState
+            torch: newState,
           } as any);
           setTorchOn(newState);
         } catch (e2) {
-          console.debug('Torch toggle failed:', e2);
+          console.debug("Torch toggle failed:", e2);
           setTorchAvailable(false);
         }
       }
@@ -161,90 +161,96 @@ export default function BarcodeScanner({
   }, [torchOn]);
 
   // Scan using Native Barcode Detection API (with frame skip for mobile)
-  const scanWithNativeAPI = useCallback((video: HTMLVideoElement) => {
-    if (!isScanningRef.current || !barcodeDetectorRef.current) return;
+  const scanWithNativeAPI = useCallback(
+    (video: HTMLVideoElement) => {
+      if (!isScanningRef.current || !barcodeDetectorRef.current) return;
 
-    frameCountRef.current++;
+      frameCountRef.current++;
 
-    // Skip frames on mobile for performance
-    if (frameCountRef.current % FRAME_SKIP !== 0) {
-      requestAnimationFrameRef.current = requestAnimationFrame(() =>
-        scanWithNativeAPI(video),
-      );
-      return;
-    }
-
-    barcodeDetectorRef.current
-      .detect(video)
-      .then((barcodes) => {
-        if (barcodes.length > 0) {
-          const code = barcodes[0].rawValue;
-          if (code) {
-            isScanningRef.current = false;
-            cleanupScanner();
-            onScanRef.current(code);
-            onCloseRef.current();
-            return;
-          }
-        }
+      // Skip frames on mobile for performance
+      if (frameCountRef.current % FRAME_SKIP !== 0) {
         requestAnimationFrameRef.current = requestAnimationFrame(() =>
           scanWithNativeAPI(video),
         );
-      })
-      .catch(() => {
-        requestAnimationFrameRef.current = requestAnimationFrame(() =>
-          scanWithNativeAPI(video),
-        );
-      });
-  }, [cleanupScanner]);
+        return;
+      }
 
-  // Scan using ZXing library (with frame skip for mobile)
-  const scanWithZXing = useCallback((video: HTMLVideoElement) => {
-    if (!isScanningRef.current || !readerRef.current) return;
-
-    frameCountRef.current++;
-
-    // Skip frames on mobile for performance
-    if (frameCountRef.current % FRAME_SKIP !== 0) {
-      requestAnimationFrameRef.current = requestAnimationFrame(() =>
-        scanWithZXing(video),
-      );
-      return;
-    }
-
-    if (
-      video.readyState === video.HAVE_ENOUGH_DATA &&
-      !video.paused &&
-      !video.ended
-    ) {
-      readerRef.current
-        .decodeFromInputVideoDevice(streamRef.current?.id || undefined, video)
-        .then((result) => {
-          if (result) {
-            isScanningRef.current = false;
-            cleanupScanner();
-            onScanRef.current(result.getText());
-            onCloseRef.current();
-            return;
+      barcodeDetectorRef.current
+        .detect(video)
+        .then((barcodes) => {
+          if (barcodes.length > 0) {
+            const code = barcodes[0].rawValue;
+            if (code) {
+              isScanningRef.current = false;
+              cleanupScanner();
+              onScanRef.current(code);
+              onCloseRef.current();
+              return;
+            }
           }
           requestAnimationFrameRef.current = requestAnimationFrame(() =>
-            scanWithZXing(video),
+            scanWithNativeAPI(video),
           );
         })
-        .catch((err) => {
-          if (!(err instanceof NotFoundException)) {
-            console.debug("ZXing scan error:", err);
-          }
+        .catch(() => {
           requestAnimationFrameRef.current = requestAnimationFrame(() =>
-            scanWithZXing(video),
+            scanWithNativeAPI(video),
           );
         });
-    } else {
-      requestAnimationFrameRef.current = requestAnimationFrame(() =>
-        scanWithZXing(video),
-      );
-    }
-  }, [cleanupScanner]);
+    },
+    [cleanupScanner],
+  );
+
+  // Scan using ZXing library (with frame skip for mobile)
+  const scanWithZXing = useCallback(
+    (video: HTMLVideoElement) => {
+      if (!isScanningRef.current || !readerRef.current) return;
+
+      frameCountRef.current++;
+
+      // Skip frames on mobile for performance
+      if (frameCountRef.current % FRAME_SKIP !== 0) {
+        requestAnimationFrameRef.current = requestAnimationFrame(() =>
+          scanWithZXing(video),
+        );
+        return;
+      }
+
+      if (
+        video.readyState === video.HAVE_ENOUGH_DATA &&
+        !video.paused &&
+        !video.ended
+      ) {
+        readerRef.current
+          .decodeFromInputVideoDevice(streamRef.current?.id || undefined, video)
+          .then((result) => {
+            if (result) {
+              isScanningRef.current = false;
+              cleanupScanner();
+              onScanRef.current(result.getText());
+              onCloseRef.current();
+              return;
+            }
+            requestAnimationFrameRef.current = requestAnimationFrame(() =>
+              scanWithZXing(video),
+            );
+          })
+          .catch((err) => {
+            if (!(err instanceof NotFoundException)) {
+              console.debug("ZXing scan error:", err);
+            }
+            requestAnimationFrameRef.current = requestAnimationFrame(() =>
+              scanWithZXing(video),
+            );
+          });
+      } else {
+        requestAnimationFrameRef.current = requestAnimationFrame(() =>
+          scanWithZXing(video),
+        );
+      }
+    },
+    [cleanupScanner],
+  );
 
   useEffect(() => {
     if (!isOpen || isInitializedRef.current) {
@@ -320,10 +326,11 @@ export default function BarcodeScanner({
 
         // Find back camera
         const backCamera =
-          videoDevices.find((d) =>
-            d.label.toLowerCase().includes("back") ||
-            d.label.toLowerCase().includes("environment") ||
-            d.label.toLowerCase().includes("rear")
+          videoDevices.find(
+            (d) =>
+              d.label.toLowerCase().includes("back") ||
+              d.label.toLowerCase().includes("environment") ||
+              d.label.toLowerCase().includes("rear"),
           ) || videoDevices[0];
 
         // Lower resolution on mobile for better performance
@@ -345,7 +352,8 @@ export default function BarcodeScanner({
         const videoTrack = stream.getVideoTracks()[0];
         try {
           const capabilities = videoTrack.getCapabilities();
-          const hasTorch = 'torch' in capabilities && capabilities.torch;
+          const hasTorch =
+            "torch" in capabilities && (capabilities.torch as boolean);
           setTorchAvailable(hasTorch);
         } catch {
           // getCapabilities might not be supported in some browsers
@@ -357,21 +365,24 @@ export default function BarcodeScanner({
           videoRef.current.setAttribute("playsinline", "true");
 
           videoRef.current.onloadedmetadata = () => {
-            videoRef.current?.play().then(() => {
-              setCameraActive(true);
-              setIsLoading(false);
-              setError(null);
+            videoRef.current
+              ?.play()
+              .then(() => {
+                setCameraActive(true);
+                setIsLoading(false);
+                setError(null);
 
-              if (useNativeApiRef.current && barcodeDetectorRef.current) {
-                scanWithNativeAPI(videoRef.current!);
-              } else {
-                scanWithZXing(videoRef.current!);
-              }
-            }).catch((err) => {
-              console.error("Video play error:", err);
-              setError("Gagal memutar video kamera.");
-              setIsLoading(false);
-            });
+                if (useNativeApiRef.current && barcodeDetectorRef.current) {
+                  scanWithNativeAPI(videoRef.current!);
+                } else {
+                  scanWithZXing(videoRef.current!);
+                }
+              })
+              .catch((err) => {
+                console.error("Video play error:", err);
+                setError("Gagal memutar video kamera.");
+                setIsLoading(false);
+              });
           };
         }
       } catch (err: unknown) {
