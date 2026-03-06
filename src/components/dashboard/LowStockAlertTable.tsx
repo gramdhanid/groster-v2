@@ -119,7 +119,7 @@ export default function LowStockAlertTable({
                     onClick={(e) => handleRestockClick(e, product.id)}
                     onKeyDown={(e) => handleRestockKeyDown(e, product.id)}
                     className="min-h-[36px] min-w-[36px] p-0 w-9 h-9 bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200 hover:text-white focus:ring-2 focus:ring-primary focus:outline-none flex items-center justify-center"
-                    aria-label={`Restock ${product.name}`}
+                    aria-label={`Restok ${product.name}`}
                   >
                     <PackagePlus size={16} />
                   </Button>

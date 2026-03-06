@@ -41,7 +41,7 @@ export default function ProductDetailModal({
   const stockNeeded = Math.max(0, product.minimumStock - product.currentStock);
 
   const primaryButton: ModalButton = {
-    label: "Restock",
+    label: "Restok",
     onClick: () => {
       onRestock(product.id);
       onClose();
@@ -124,7 +124,7 @@ export default function ProductDetailModal({
             {/* Kekurangan */}
             {stockNeeded > 0 && (
               <div className="flex items-center justify-between py-2">
-                <span className="text-red-400 font-medium">Perlu Restock</span>
+                <span className="text-red-400 font-medium">Perlu Restok</span>
                 <div className="text-right">
                   <span className="text-2xl font-black text-red-400">
                     +{stockNeeded}

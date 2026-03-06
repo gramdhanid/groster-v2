@@ -21,7 +21,7 @@ export default function TopSellingProducts({
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-white">
             <Award className="text-primary" size={20} />
-            Top Selling Products
+            Produk Terlaris
           </div>
           <span className="text-xs text-slate-500 font-normal">Bulan Ini</span>
         </CardTitle>
@@ -29,7 +29,7 @@ export default function TopSellingProducts({
       <CardContent className="space-y-4">
         {products.length === 0 ? (
           <div className="text-center text-slate-400 py-8">
-            No sales data available yet
+            Belum ada data penjualan
           </div>
         ) : (
           products.map((product, index) => (
@@ -45,7 +45,7 @@ export default function TopSellingProducts({
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-slate-400">
-                    {product.quantitySold} sold
+                    {product.quantitySold} terjual
                   </div>
                   <div className="font-bold text-white">
                     {formatCurrency(product.revenue)}

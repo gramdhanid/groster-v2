@@ -19,13 +19,13 @@ const cashflowConfig = {
     Icon: DollarSign,
     bgClass: "bg-green-500/20",
     textClass: "text-green-400",
-    label: "Cash",
+    label: "Tunai",
   },
   cashless: {
     Icon: CreditCard,
     bgClass: "bg-blue-500/20",
     textClass: "text-blue-400",
-    label: "Cashless",
+    label: "Non-Tunai",
   },
   receivables: {
     Icon: AlertCircle,

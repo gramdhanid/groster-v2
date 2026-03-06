@@ -123,7 +123,7 @@ Terima kasih.`;
     <BottomSheetModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Pesanan Restock"
+      title="Pesanan Restok"
       icon={<Package size={20} />}
       size="md"
       bodyClassName="p-6"

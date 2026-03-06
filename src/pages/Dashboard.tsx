@@ -55,7 +55,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pt-6">
-      <h1 className="text-3xl font-bold text-white">Dashboard Overview</h1>
+      <h1 className="text-3xl font-bold text-white">Ringkasan Dashboard</h1>
 
       {/* Daily Snapshot Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

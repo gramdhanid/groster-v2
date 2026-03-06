@@ -1,9 +1,16 @@
-import { useState } from 'react';
-import { Wallet, ChevronDown, ChevronUp } from 'lucide-react';
-import { formatCurrency } from '@/utils/format';
-import { cn } from '@/lib/utils';
-import { BottomSheetModal } from '@/components/ui/BottomSheetModal';
-import type { CashflowSummary, PaymentStatus, DueDateStatus } from '@/types/cashflow';
+import { useState } from "react";
+import { Wallet, ChevronDown, ChevronUp } from "lucide-react";
+import { formatCurrency } from "@/utils/format";
+import { cn } from "@/lib/utils";
+import {
+  BottomSheetModal,
+  type ModalButton,
+} from "@/components/ui/BottomSheetModal";
+import type {
+  CashflowSummary,
+  PaymentStatus,
+  DueDateStatus,
+} from "@/types/cashflow";
 
 interface CashflowModalProps {
   isOpen: boolean;
@@ -20,7 +27,13 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
-function ExpandableSection({ title, count, isExpanded, onToggle, children }: SectionProps) {
+function ExpandableSection({
+  title,
+  count,
+  isExpanded,
+  onToggle,
+  children,
+}: SectionProps) {
   return (
     <div className="border-b border-slate-700 last:border-0">
       <button
@@ -44,35 +57,38 @@ function ExpandableSection({ title, count, isExpanded, onToggle, children }: Sec
 
 function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
   const config = {
-    LUNAS: 'bg-green-500/20 text-green-400 border-green-500/30',
-    PENDING: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-    'MENUNGGU KONFIRMASI':
-      'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    LUNAS: "bg-green-500/20 text-green-400 border-green-500/30",
+    PENDING: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    "MENUNGGU KONFIRMASI":
+      "bg-orange-500/20 text-orange-400 border-orange-500/30",
   };
 
   return (
     <span
-      className={cn(
-        'text-xs px-2 py-1 rounded-full border',
-        config[status]
-      )}
+      className={cn("text-xs px-2 py-1 rounded-full border", config[status])}
     >
       {status}
     </span>
   );
 }
 
-function DueDateBadge({ status, dueDate }: { status: DueDateStatus; dueDate: string }) {
+function DueDateBadge({
+  status,
+  dueDate,
+}: {
+  status: DueDateStatus;
+  dueDate: string;
+}) {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
-  if (status === 'OVERDUE') {
+  if (status === "OVERDUE") {
     return (
       <div className="flex flex-col items-start gap-1">
         <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-medium">
@@ -83,7 +99,7 @@ function DueDateBadge({ status, dueDate }: { status: DueDateStatus; dueDate: str
     );
   }
 
-  if (status === 'WARNING') {
+  if (status === "WARNING") {
     return (
       <div className="flex flex-col items-start gap-1">
         <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-medium">
@@ -103,9 +119,9 @@ function DueDateBadge({ status, dueDate }: { status: DueDateStatus; dueDate: str
 
 function formatTime(isoString: string) {
   const date = new Date(isoString);
-  return date.toLocaleTimeString('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -125,11 +141,16 @@ export default function CashflowModal({
     receivables: false,
   });
 
-  const toggleSection = (section: 'cash' | 'cashless' | 'receivables') => {
+  const toggleSection = (section: "cash" | "cashless" | "receivables") => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
+  };
+
+  const secondaryButton: ModalButton = {
+    label: "Kembali",
+    onClick: onClose,
   };
 
   return (
@@ -140,6 +161,7 @@ export default function CashflowModal({
       icon={<Wallet size={20} />}
       size="2xl"
       bodyClassName="p-0"
+      secondaryButton={secondaryButton}
     >
       {isLoading || !data ? (
         <div className="p-6 space-y-4">
@@ -156,7 +178,7 @@ export default function CashflowModal({
             title="Transaksi Cash"
             count={data.cash_transactions.length}
             isExpanded={expandedSections.cash}
-            onToggle={() => toggleSection('cash')}
+            onToggle={() => toggleSection("cash")}
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -186,10 +208,10 @@ export default function CashflowModal({
                         {formatTime(trx.created_at)}
                       </td>
                       <td className="py-2 px-3 text-slate-300">
-                        {trx.customer_name || '-'}
+                        {trx.customer_name || "-"}
                       </td>
                       <td className="py-2 px-3 text-slate-400">
-                        {trx.items?.join(', ') || '-'}
+                        {trx.items?.join(", ") || "-"}
                       </td>
                       <td className="py-2 px-3 text-right text-white font-medium">
                         {formatCurrency(trx.total)}
@@ -206,7 +228,7 @@ export default function CashflowModal({
             title="Transaksi Cashless"
             count={data.cashless_transactions.length}
             isExpanded={expandedSections.cashless}
-            onToggle={() => toggleSection('cashless')}
+            onToggle={() => toggleSection("cashless")}
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -244,10 +266,12 @@ export default function CashflowModal({
                         </span>
                       </td>
                       <td className="py-2 px-3 text-slate-300">
-                        {trx.customer_name || '-'}
+                        {trx.customer_name || "-"}
                       </td>
                       <td className="py-2 px-3">
-                        {trx.status && <PaymentStatusBadge status={trx.status} />}
+                        {trx.status && (
+                          <PaymentStatusBadge status={trx.status} />
+                        )}
                       </td>
                       <td className="py-2 px-3 text-right text-white font-medium">
                         {formatCurrency(trx.total)}
@@ -264,7 +288,7 @@ export default function CashflowModal({
             title="Piutang Pelanggan"
             count={data.accounts_receivable.length}
             isExpanded={expandedSections.receivables}
-            onToggle={() => toggleSection('receivables')}
+            onToggle={() => toggleSection("receivables")}
           >
             <div className="overflow-x-auto pb-4">
               <table className="w-full text-sm">
@@ -286,8 +310,8 @@ export default function CashflowModal({
                     <tr
                       key={ar.id}
                       className={cn(
-                        'border-b border-slate-700/50 last:border-0 hover:bg-slate-800/30',
-                        ar.due_date_status === 'OVERDUE' && 'bg-red-500/5'
+                        "border-b border-slate-700/50 last:border-0 hover:bg-slate-800/30",
+                        ar.due_date_status === "OVERDUE" && "bg-red-500/5",
                       )}
                     >
                       <td className="py-2 px-3">
@@ -309,10 +333,10 @@ export default function CashflowModal({
                       <td className="py-2 px-3 text-right">
                         <span
                           className={cn(
-                            'font-medium',
-                            ar.due_date_status === 'OVERDUE'
-                              ? 'text-red-400'
-                              : 'text-white'
+                            "font-medium",
+                            ar.due_date_status === "OVERDUE"
+                              ? "text-red-400"
+                              : "text-white",
                           )}
                         >
                           {formatCurrency(ar.total_debt)}
