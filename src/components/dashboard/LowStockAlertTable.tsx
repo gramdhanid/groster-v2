@@ -108,7 +108,7 @@ export default function LowStockAlertTable({
                     className={`min-h-[36px] px-2 text-xs font-medium whitespace-nowrap ${
                       status === "critical"
                         ? "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30"
-                        : "bg-yellow/20 text-yellow border-yellow/30 hover:bg-yellow/30"
+                        : "bg-[hsl(var(--yellow)/0.2)] text-[hsl(var(--yellow))] border-[hsl(var(--yellow)/0.3)] hover:bg-[hsl(var(--yellow)/0.3)]"
                     }`}
                   >
                     {stockLabel}
