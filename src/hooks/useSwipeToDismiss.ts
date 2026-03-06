@@ -19,6 +19,8 @@ interface SwipeHandlers {
 
 interface SwipeResult {
   handlers: SwipeHandlers;
+  /** Handlers for header area - always allows drag regardless of scroll position */
+  headerHandlers: SwipeHandlers;
   style: React.CSSProperties;
   contentRef: React.RefObject<HTMLDivElement | null>;
   canPullToDismiss: boolean;
@@ -31,12 +33,13 @@ interface SwipeResult {
  * Features:
  * - Drag down on mobile to dismiss modal
  * - Visual feedback during drag
- * - Smart detection: only allows drag when content is at top
+ * - Smart detection: body handlers only allow drag when content is at top
+ * - Header handlers always allow drag regardless of scroll position
  * - Configurable threshold
  * - Can be disabled via `enabled` prop
  *
  * @param props - Configuration options
- * @returns Handlers, styles, and refs to attach to modal elements
+ * @returns Handlers (for body), headerHandlers (for header), styles, and refs
  */
 export function useSwipeToDismiss({
   isOpen,
@@ -50,6 +53,7 @@ export function useSwipeToDismiss({
   const [canPullToDismiss, setCanPullToDismiss] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
 
+  // Body handlers - check scroll position before allowing drag
   const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     if (!enabled || !canPullToDismiss) return;
 
@@ -57,6 +61,15 @@ export function useSwipeToDismiss({
     setDragStartY(clientY);
     setIsDragging(true);
   }, [enabled, canPullToDismiss]);
+
+  // Header handlers - always allow drag regardless of scroll position
+  const handleHeaderDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    if (!enabled) return;
+
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    setDragStartY(clientY);
+    setIsDragging(true);
+  }, [enabled]);
 
   const handleDragMove = useCallback((e: React.TouchEvent | React.MouseEvent) => {
     if (!isDragging) return;
@@ -104,11 +117,22 @@ export function useSwipeToDismiss({
   };
 
   return {
+    // Body handlers - only allow drag when at top
     handlers: {
       onTouchStart: handleDragStart as (e: React.TouchEvent) => void,
       onTouchMove: handleDragMove as (e: React.TouchEvent) => void,
       onTouchEnd: handleDragEnd,
       onMouseDown: handleDragStart as (e: React.MouseEvent) => void,
+      onMouseMove: handleDragMove as (e: React.MouseEvent) => void,
+      onMouseUp: handleDragEnd,
+      onMouseLeave: handleDragEnd,
+    },
+    // Header handlers - always allow drag
+    headerHandlers: {
+      onTouchStart: handleHeaderDragStart as (e: React.TouchEvent) => void,
+      onTouchMove: handleDragMove as (e: React.TouchEvent) => void,
+      onTouchEnd: handleDragEnd,
+      onMouseDown: handleHeaderDragStart as (e: React.MouseEvent) => void,
       onMouseMove: handleDragMove as (e: React.MouseEvent) => void,
       onMouseUp: handleDragEnd,
       onMouseLeave: handleDragEnd,

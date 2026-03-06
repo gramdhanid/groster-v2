@@ -80,7 +80,7 @@ export function BottomSheetModal({
   useModalBackButton({ isOpen, onClose });
 
   // Setup swipe-to-dismiss
-  const { handlers, style, contentRef, onScroll } = useSwipeToDismiss({
+  const { handlers, headerHandlers, style, contentRef, onScroll } = useSwipeToDismiss({
     isOpen,
     onClose,
     enabled: swipeToDismiss,
@@ -102,15 +102,17 @@ export function BottomSheetModal({
         )}
         onClick={(e) => e.stopPropagation()}
         style={style}
-        {...handlers}
       >
         {/* Handle Indicator */}
-        <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing flex-shrink-0">
+        <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing flex-shrink-0" {...headerHandlers}>
           <div className="w-12 h-1.5 bg-slate-600 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pb-6 border-b border-slate-800 flex-shrink-0">
+        <div
+          className="flex items-center justify-between px-6 pb-6 border-b border-slate-800 flex-shrink-0"
+          {...headerHandlers}
+        >
           <div className="flex items-center gap-3">
             {icon && <div className="text-primary">{icon}</div>}
             <h2 className="text-xl font-black tracking-tight">{title}</h2>
@@ -122,6 +124,7 @@ export function BottomSheetModal({
           ref={contentRef}
           className={cn('overflow-y-auto flex-1 min-h-0', bodyClassName)}
           onScroll={onScroll}
+          {...handlers}
         >
           {children}
         </div>
