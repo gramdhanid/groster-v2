@@ -1,9 +1,9 @@
-import { type ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import { useScrollLock } from '@/hooks/useScrollLock';
-import { useSwipeToDismiss } from '@/hooks/useSwipeToDismiss';
-import { useModalBackButton } from '@/hooks/useModalBackButton';
-import { ModalPortal } from './ModalPortal';
+import { type ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { useScrollLock } from "@/hooks/useScrollLock";
+import { useSwipeToDismiss } from "@/hooks/useSwipeToDismiss";
+import { useModalBackButton } from "@/hooks/useModalBackButton";
+import { ModalPortal } from "./ModalPortal";
 
 export interface ModalButton {
   /** Button label text */
@@ -28,7 +28,7 @@ export interface BottomSheetModalProps {
   /** Optional icon displayed next to the title */
   icon?: ReactNode;
   /** Size of the modal on desktop */
-  size?: 'md' | 'lg' | 'xl' | '2xl' | 'full';
+  size?: "md" | "lg" | "xl" | "2xl" | "full";
   /** Enable swipe-to-dismiss gesture (default: true) */
   swipeToDismiss?: boolean;
   /** Body content - scrollable */
@@ -48,11 +48,11 @@ export interface BottomSheetModalProps {
 }
 
 const sizeClasses = {
-  md: 'sm:max-w-md',
-  lg: 'sm:max-w-lg',
-  xl: 'sm:max-w-xl',
-  '2xl': 'sm:max-w-2xl',
-  full: 'sm:max-w-full',
+  md: "sm:max-w-md",
+  lg: "sm:max-w-lg",
+  xl: "sm:max-w-xl",
+  "2xl": "sm:max-w-2xl",
+  full: "sm:max-w-full",
 };
 
 /**
@@ -85,7 +85,7 @@ export function BottomSheetModal({
   onClose,
   title,
   icon,
-  size = '2xl',
+  size = "2xl",
   swipeToDismiss = true,
   children,
   footer,
@@ -102,11 +102,12 @@ export function BottomSheetModal({
   useModalBackButton({ isOpen, onClose });
 
   // Setup swipe-to-dismiss
-  const { handlers, headerHandlers, style, contentRef, onScroll } = useSwipeToDismiss({
-    isOpen,
-    onClose,
-    enabled: swipeToDismiss,
-  });
+  const { handlers, headerHandlers, style, contentRef, onScroll } =
+    useSwipeToDismiss({
+      isOpen,
+      onClose,
+      enabled: swipeToDismiss,
+    });
 
   const modalSize = sizeClasses[size];
 
@@ -117,14 +118,16 @@ export function BottomSheetModal({
     widthClass,
   }: {
     button: ModalButton;
-    variant: 'primary' | 'secondary';
+    variant: "primary" | "secondary";
     widthClass?: string;
   }) => {
-    const baseClasses = 'py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2';
+    const baseClasses =
+      "py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2";
 
     const variantClasses = {
-      primary: 'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90',
-      secondary: 'bg-slate-800 text-slate-400 hover:bg-slate-700 border-0',
+      primary:
+        "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90",
+      secondary: "bg-slate-800 text-slate-400 hover:bg-slate-700 border-0",
     };
 
     return (
@@ -136,7 +139,7 @@ export function BottomSheetModal({
           baseClasses,
           variantClasses[variant],
           widthClass,
-          button.disabled && 'opacity-50 cursor-not-allowed',
+          button.disabled && "opacity-50 cursor-not-allowed",
           button.className,
         )}
       >
@@ -149,8 +152,8 @@ export function BottomSheetModal({
   // Render buttons from props
   const renderButtons = () => {
     const hasBothButtons = primaryButton && secondaryButton;
-    const containerClasses = hasBothButtons ? 'flex gap-3' : '';
-    const buttonWidthClass = hasBothButtons ? 'flex-1' : 'w-full';
+    const containerClasses = hasBothButtons ? "flex gap-3" : "";
+    const buttonWidthClass = hasBothButtons ? "flex-1" : "w-full";
 
     return (
       <div className={containerClasses}>
@@ -186,49 +189,50 @@ export function BottomSheetModal({
         className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       >
-      <div
-        className={cn(
-          'bg-[#0f172a] w-full rounded-t-3xl sm:rounded-2xl shadow-2xl text-white animate-in slide-in-from-bottom duration-300 relative max-h-[85vh] flex flex-col',
-          modalSize,
-          className
-        )}
-        onClick={(e) => e.stopPropagation()}
-        style={style}
-      >
-        {/* Handle Indicator */}
-        <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing flex-shrink-0" {...headerHandlers}>
-          <div className="w-12 h-1.5 bg-slate-600 rounded-full" />
-        </div>
-
-        {/* Header */}
         <div
-          className="flex items-center justify-between px-6 pb-6 border-b border-slate-800 flex-shrink-0"
-          {...headerHandlers}
+          className={cn(
+            "bg-[#0f172a] w-full rounded-t-3xl sm:rounded-2xl shadow-2xl text-white animate-in slide-in-from-bottom duration-300 relative max-h-[85vh] flex flex-col",
+            modalSize,
+            className,
+          )}
+          onClick={(e) => e.stopPropagation()}
+          style={style}
         >
-          <div className="flex items-center gap-3">
-            {icon && <div className="text-primary">{icon}</div>}
-            <h2 className="text-xl font-black tracking-tight">{title}</h2>
+          {/* Handle Indicator */}
+          <div
+            className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing flex-shrink-0"
+            {...headerHandlers}
+          >
+            <div className="w-12 h-1.5 bg-slate-600 rounded-full" />
           </div>
-        </div>
 
-        {/* Body */}
-        <div
-          ref={contentRef}
-          className={cn('overflow-y-auto flex-1 min-h-0', bodyClassName)}
-          onScroll={onScroll}
-          {...handlers}
-        >
-          {children}
-        </div>
-
-        {/* Footer */}
-        {footerContent && (
-          <div className="p-6 pt-0 flex-shrink-0">
-            {footerContent}
+          {/* Header */}
+          <div
+            className="flex items-center justify-between px-6 pb-6 border-b border-slate-800 flex-shrink-0"
+            {...headerHandlers}
+          >
+            <div className="flex items-center gap-3">
+              {icon && <div className="text-primary">{icon}</div>}
+              <h2 className="text-xl font-black tracking-tight">{title}</h2>
+            </div>
           </div>
-        )}
+
+          {/* Body */}
+          <div
+            ref={contentRef}
+            className={cn("overflow-y-auto flex-1 min-h-0", bodyClassName)}
+            onScroll={onScroll}
+            {...handlers}
+          >
+            {children}
+          </div>
+
+          {/* Footer */}
+          {footerContent && (
+            <div className="p-6 pt-6 flex-shrink-0">{footerContent}</div>
+          )}
+        </div>
       </div>
-    </div>
     </ModalPortal>
   );
 }
