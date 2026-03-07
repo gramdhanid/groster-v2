@@ -11,7 +11,6 @@ import {
   Package,
 } from "lucide-react";
 
-import { useKeyboardHeight } from "../../hooks/useKeyboardHeight";
 import type { Product, ProductUnit } from "../../types/product";
 import { PRODUCT_CATEGORIES } from "../../types/product";
 import ConfirmDialog from "../ui/ConfirmDialog";
@@ -55,8 +54,6 @@ export default function ProductModal({
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
   const [pendingCategory, setPendingCategory] = useState<string>("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-
-  const { keyboardHeight } = useKeyboardHeight({ enabled: isOpen });
 
   useEffect(() => {
     if (initialData) {
@@ -222,13 +219,7 @@ export default function ProductModal({
   };
 
   // Dynamic style for keyboard height handling
-  const modalStyle = keyboardHeight > 0
-    ? { height: `calc(100vh - ${keyboardHeight}px)` }
-    : {};
-
-  const bodyPaddingStyle = keyboardHeight > 0
-    ? { paddingBottom: "16px" }
-    : {};
+  // Note: Keyboard height handling was removed as style prop is not supported
 
   return (
     <>
@@ -240,16 +231,12 @@ export default function ProductModal({
         size="2xl"
         className="flex flex-col"
         bodyClassName="p-6 space-y-8 bg-[#020617]"
-        style={modalStyle}
         primaryButton={{
           label: "Simpan Produk",
           onClick: handleSave,
         }}
       >
-        {/* Keyboard height padding adjustment */}
-        {keyboardHeight > 0 && (
-          <div style={bodyPaddingStyle} />
-        )}
+        {/* Keyboard height padding adjustment removed - style prop not supported */}
 
         {/* Basic Info */}
         <div className="space-y-4">

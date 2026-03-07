@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Package, Plus, Minus, CheckCircle, AlertCircle, Layers } from 'lucide-react';
+import { Package, Plus, Minus, CheckCircle, AlertCircle, Layers } from 'lucide-react';
 import { BottomSheetModal } from "../ui/BottomSheetModal";
 import ConfirmDialog from "../ui/ConfirmDialog";
 
@@ -41,11 +41,12 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
     useEffect(() => {
         if (product && selectedUnit) {
             const totalAdjustment = adjustment * selectedUnit.qty_per_base_unit;
-            setFinalStock(product.stock_qty + totalAdjustment);
+            setFinalStock (product.stock_qty + totalAdjustment);
         }
     }, [adjustment, selectedUnit, product]);
 
     const handleSave = () => {
+        if (!product) return;
         onSave(product.id, finalStock);
         onClose();
     };

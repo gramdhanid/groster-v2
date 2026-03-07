@@ -135,16 +135,7 @@ export default function ProductFilterModal({
       <BottomSheetModal
         isOpen={isOpen}
         onClose={onClose}
-        title={
-          <div className="flex items-center gap-3">
-            <span>Filter Produk</span>
-            {activeFilterCount > 0 && (
-              <span className="bg-primary/20 text-primary text-xs font-bold px-2 py-0.5 rounded-full">
-                {activeFilterCount}
-              </span>
-            )}
-          </div>
-        }
+        title={activeFilterCount > 0 ? `Filter Produk (${activeFilterCount})` : "Filter Produk"}
         bodyClassName="p-6"
         icon={<Filter className="text-primary" size={20} />}
         size="lg"
