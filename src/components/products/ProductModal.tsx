@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
-  X,
   Plus,
   Trash2,
   Tag,
@@ -13,11 +12,11 @@ import {
 } from "lucide-react";
 
 import { useKeyboardHeight } from "../../hooks/useKeyboardHeight";
-import { useScrollLock } from "../../hooks/useScrollLock";
 import type { Product, ProductUnit } from "../../types/product";
 import { PRODUCT_CATEGORIES } from "../../types/product";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import BarcodeScanner from "./BarcodeScanner";
+import { BottomSheetModal } from "../ui/BottomSheetModal";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -34,9 +33,6 @@ export default function ProductModal({
   onSave,
   initialData,
 }: ProductModalProps) {
-  // Lock body scroll when modal is open
-  useScrollLock(isOpen);
-
   const [name, setName] = useState("");
   const [category, setCategory] = useState<string>(CATEGORIES[0]);
   const [customCategory, setCustomCategory] = useState("");
@@ -99,8 +95,6 @@ export default function ProductModal({
     }
     setHasUnsavedChanges(false);
   }, [initialData, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleAddUnit = () => {
     setUnits([
@@ -227,302 +221,293 @@ export default function ProductModal({
     setShowConfirm(false);
   };
 
+  // Dynamic style for keyboard height handling
+  const modalStyle = keyboardHeight > 0
+    ? { height: `calc(100vh - ${keyboardHeight}px)` }
+    : {};
+
+  const bodyPaddingStyle = keyboardHeight > 0
+    ? { paddingBottom: "16px" }
+    : {};
+
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 backdrop-blur-sm transition-opacity">
-      <div
-        className="bg-[#0f172a] rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 translate-y-0 text-white overflow-hidden"
-        style={{
-          height:
-            keyboardHeight > 0 ? `calc(100vh - ${keyboardHeight}px)` : "95vh",
+    <>
+      <BottomSheetModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={initialData?.name ? "Edit Produk" : "Tambah Produk Baru"}
+        icon={<Package className="text-primary" />}
+        size="2xl"
+        className="flex flex-col"
+        bodyClassName="p-6 space-y-8 bg-[#020617]"
+        style={modalStyle}
+        primaryButton={{
+          label: "Simpan Produk",
+          onClick: handleSave,
         }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-800 shrink-0">
-          <h2 className="text-xl font-black tracking-tight flex items-center gap-2">
-            <Package className="text-primary" size={24} />
-            {initialData?.name ? "Edit Produk" : "Tambah Produk Baru"}
-          </h2>
-          <button
-            onClick={handleClose}
-            className="p-2 -mr-2 text-slate-400 hover:bg-slate-800 rounded-full transition-colors"
-          >
-            <X size={24} />
-          </button>
-        </div>
+        {/* Keyboard height padding adjustment */}
+        {keyboardHeight > 0 && (
+          <div style={bodyPaddingStyle} />
+        )}
 
-        {/* Form Body */}
-        <div
-          className="flex-1 overflow-y-auto p-6 space-y-8 bg-[#020617]"
-          style={{ paddingBottom: keyboardHeight > 0 ? "16px" : "24px" }}
-        >
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
-              <Tag size={16} /> Data Dasar
+        {/* Basic Info */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
+            <Tag size={16} /> Data Dasar
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-400">
+                Nama Produk
+              </label>
+              <input
+                type="text"
+                value={name}
+                onFocus={handleFocus}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setHasUnsavedChanges(true);
+                }}
+                placeholder="Contoh: Indomie Goreng"
+                className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-lg"
+              />
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-400">
-                  Nama Produk
-                </label>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-400">
+                Kategori
+              </label>
+              <select
+                value={category}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCategory(val);
+                  setIsCustom(val === "NEW");
+                  setHasUnsavedChanges(true);
+                }}
+                className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold appearance-none"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c} className="bg-[#0f172a]">
+                    {c}
+                  </option>
+                ))}
+                <option
+                  value="NEW"
+                  className="bg-[#0f172a] text-primary font-black"
+                >
+                  + Kategori Baru
+                </option>
+              </select>
+              {isCustom && (
+                <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
+                  <input
+                    type="text"
+                    value={customCategory}
+                    onChange={(e) => {
+                      setCustomCategory(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
+                    placeholder="Ketik nama kategori baru..."
+                    className="w-full bg-primary/5 border border-primary/20 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold placeholder:text-slate-600 border-dashed"
+                    autoFocus
+                  />
+                </div>
+              )}
+            </div>
+            <div className=" space-y-2">
+              <label className="text-sm font-bold text-slate-400">
+                Barcode
+              </label>
+              <div className="relative">
+                <Barcode
+                  size={20}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                />
                 <input
                   type="text"
-                  value={name}
+                  value={barcode}
                   onFocus={handleFocus}
                   onChange={(e) => {
-                    setName(e.target.value);
+                    setBarcode(e.target.value);
                     setHasUnsavedChanges(true);
                   }}
-                  placeholder="Contoh: Indomie Goreng"
-                  className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-lg"
+                  placeholder="Scan atau ketik manual"
+                  className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 pr-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
                 />
+                <button
+                  type="button"
+                  onClick={() => setIsScannerOpen(true)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors"
+                  title="Scan barcode dengan kamera"
+                >
+                  <Camera size={18} />
+                </button>
               </div>
+            </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-400">
-                  Kategori
-                </label>
-                <select
-                  value={category}
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-400">
+                Stok Awal
+              </label>
+              <div className="relative">
+                <Boxes
+                  size={20}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  onFocus={handleFocus}
+                  value={formatNumber(stockQty)}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    setCategory(val);
-                    setIsCustom(val === "NEW");
+                    setStockQty(parseNumber(e.target.value));
                     setHasUnsavedChanges(true);
                   }}
-                  className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold appearance-none"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c} className="bg-[#0f172a]">
-                      {c}
-                    </option>
-                  ))}
-                  <option
-                    value="NEW"
-                    className="bg-[#0f172a] text-primary font-black"
-                  >
-                    + Kategori Baru
-                  </option>
-                </select>
-                {isCustom && (
-                  <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
-                    <input
-                      type="text"
-                      value={customCategory}
-                      onChange={(e) => {
-                        setCustomCategory(e.target.value);
-                        setHasUnsavedChanges(true);
-                      }}
-                      placeholder="Ketik nama kategori baru..."
-                      className="w-full bg-primary/5 border border-primary/20 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold placeholder:text-slate-600 border-dashed"
-                      autoFocus
-                    />
-                  </div>
-                )}
-              </div>
-              <div className=" space-y-2">
-                <label className="text-sm font-bold text-slate-400">
-                  Barcode
-                </label>
-                <div className="relative">
-                  <Barcode
-                    size={20}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-                  <input
-                    type="text"
-                    value={barcode}
-                    onFocus={handleFocus}
-                    onChange={(e) => {
-                      setBarcode(e.target.value);
-                      setHasUnsavedChanges(true);
-                    }}
-                    placeholder="Scan atau ketik manual"
-                    className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 pr-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setIsScannerOpen(true)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors"
-                    title="Scan barcode dengan kamera"
-                  >
-                    <Camera size={18} />
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-400">
-                  Stok Awal
-                </label>
-                <div className="relative">
-                  <Boxes
-                    size={20}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"
-                  />
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    onFocus={handleFocus}
-                    value={formatNumber(stockQty)}
-                    onChange={(e) => {
-                      setStockQty(parseNumber(e.target.value));
-                      setHasUnsavedChanges(true);
-                    }}
-                    placeholder="0"
-                    className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-lg"
-                  />
-                </div>
+                  placeholder="0"
+                  className="w-full bg-slate-800/50 border border-slate-700 p-4 pl-12 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold text-lg"
+                />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Units & Pricing */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
-                <DollarSign size={16} /> Satuan & Harga Jual
-              </div>
-              <button
-                onClick={handleAddUnit}
-                className="text-primary font-bold text-xs flex items-center gap-1 bg-primary/10 px-3 py-1 rounded-full border border-primary/20"
-              >
-                <Plus size={14} /> Tambah Satuan
-              </button>
+        {/* Units & Pricing */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
+              <DollarSign size={16} /> Satuan & Harga Jual
             </div>
+            <button
+              onClick={handleAddUnit}
+              className="text-primary font-bold text-xs flex items-center gap-1 bg-primary/10 px-3 py-1 rounded-full border border-primary/20"
+            >
+              <Plus size={14} /> Tambah Satuan
+            </button>
+          </div>
 
-            <div className="space-y-4">
-              {units.map((unit, index) => (
-                <div
-                  key={unit.id}
-                  className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl relative"
-                >
-                  {units.length > 1 && (
-                    <button
-                      onClick={() => handleRemoveUnit(unit.id)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
+          <div className="space-y-4">
+            {units.map((unit, index) => (
+              <div
+                key={unit.id}
+                className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl relative"
+              >
+                {units.length > 1 && (
+                  <button
+                    onClick={() => handleRemoveUnit(unit.id)}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                        Nama Satuan
-                      </label>
-                      <input
-                        type="text"
-                        value={unit.unit_type}
-                        disabled={unit.unit_type === "Pcs"}
-                        onFocus={handleFocus}
-                        onChange={(e) =>
-                          updateUnit(unit.id, "unit_type", e.target.value)
-                        }
-                        placeholder="Pcs, Dus, Karung, dll"
-                        className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${unit.unit_type === "Pcs" ? "opacity-50 grayscale" : ""}`}
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                        Isi per {units[0].unit_type || "Satuan Dasar"}
-                      </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Nama Satuan
+                    </label>
+                    <input
+                      type="text"
+                      value={unit.unit_type}
+                      disabled={unit.unit_type === "Pcs"}
+                      onFocus={handleFocus}
+                      onChange={(e) =>
+                        updateUnit(unit.id, "unit_type", e.target.value)
+                      }
+                      placeholder="Pcs, Dus, Karung, dll"
+                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${unit.unit_type === "Pcs" ? "opacity-50 grayscale" : ""}`}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Isi per {units[0].unit_type || "Satuan Dasar"}
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      disabled={index === 0}
+                      onFocus={handleFocus}
+                      value={formatNumber(unit.qty_per_base_unit)}
+                      onChange={(e) =>
+                        updateUnit(
+                          unit.id,
+                          "qty_per_base_unit",
+                          parseNumber(e.target.value),
+                        )
+                      }
+                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${index === 0 ? "opacity-50 grayscale" : ""}`}
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Harga Beli (Modal)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500">
+                        Rp
+                      </span>
                       <input
                         type="text"
                         inputMode="numeric"
-                        disabled={index === 0}
                         onFocus={handleFocus}
-                        value={formatNumber(unit.qty_per_base_unit)}
+                        value={formatNumber(unit.price_cost)}
                         onChange={(e) =>
                           updateUnit(
                             unit.id,
-                            "qty_per_base_unit",
+                            "price_cost",
                             parseNumber(e.target.value),
                           )
                         }
-                        className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${index === 0 ? "opacity-50 grayscale" : ""}`}
+                        className="w-full bg-slate-900 border border-slate-700 p-3 pl-8 rounded-xl outline-none font-bold text-lg focus:border-primary transition-colors"
                       />
                     </div>
-                    <div className="col-span-2 space-y-1">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                        Harga Beli (Modal)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500">
-                          Rp
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          onFocus={handleFocus}
-                          value={formatNumber(unit.price_cost)}
-                          onChange={(e) =>
-                            updateUnit(
-                              unit.id,
-                              "price_cost",
-                              parseNumber(e.target.value),
-                            )
-                          }
-                          className="w-full bg-slate-900 border border-slate-700 p-3 pl-8 rounded-xl outline-none font-bold text-lg focus:border-primary transition-colors"
-                        />
-                      </div>
-                    </div>
-                    <div className="col-span-2 space-y-1">
-                      <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                        Harga Jual
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary">
-                          Rp
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          onFocus={handleFocus}
-                          value={formatNumber(unit.price_sell)}
-                          onChange={(e) =>
-                            updateUnit(
-                              unit.id,
-                              "price_sell",
-                              parseNumber(e.target.value),
-                            )
-                          }
-                          className="w-full bg-slate-900 border border-primary/50 text-primary p-3 pl-8 rounded-xl outline-none font-black text-lg focus:ring-1 focus:ring-primary transition-colors"
-                        />
-                      </div>
+                  </div>
+                  <div className="col-span-2 space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
+                      Harga Jual
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary">
+                        Rp
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        onFocus={handleFocus}
+                        value={formatNumber(unit.price_sell)}
+                        onChange={(e) =>
+                          updateUnit(
+                            unit.id,
+                            "price_sell",
+                            parseNumber(e.target.value),
+                          )
+                        }
+                        className="w-full bg-slate-900 border border-primary/50 text-primary p-3 pl-8 rounded-xl outline-none font-black text-lg focus:ring-1 focus:ring-primary transition-colors"
+                      />
                     </div>
                   </div>
-
-                  {unit.price_sell > 0 && unit.price_cost > 0 && (
-                    <div className="mt-4 flex gap-4 text-[10px] font-bold">
-                      <span className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
-                        Laba:{" "}
-                        {(
-                          ((unit.price_sell - unit.price_cost) /
-                            unit.price_sell) *
-                          100
-                        ).toFixed(1)}
-                        % ({unit.price_sell - unit.price_cost})
-                      </span>
-                    </div>
-                  )}
                 </div>
-              ))}
-            </div>
+
+                {unit.price_sell > 0 && unit.price_cost > 0 && (
+                  <div className="mt-4 flex gap-4 text-[10px] font-bold">
+                    <span className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
+                      Laba:{" "}
+                      {(
+                        ((unit.price_sell - unit.price_cost) /
+                          unit.price_sell) *
+                        100
+                      ).toFixed(1)}
+                      % ({unit.price_sell - unit.price_cost})
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Footer Actions */}
-        <div className="p-6 shrink-0 bg-[#0f172a] border-t border-slate-800">
-          <button
-            onClick={handleSave}
-            className="w-full bg-primary text-white py-5 rounded-2xl font-black text-xl shadow-xl shadow-primary/20 active:scale-[0.98] transition-all"
-          >
-            Simpan Produk
-          </button>
-        </div>
-      </div>
+      </BottomSheetModal>
 
       {/* Confirmation Dialog */}
       <ConfirmDialog
@@ -557,6 +542,6 @@ export default function ProductModal({
           setHasUnsavedChanges(true);
         }}
       />
-    </div>
+    </>
   );
 }
