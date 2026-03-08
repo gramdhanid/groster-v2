@@ -612,13 +612,13 @@ export default function ProductList() {
                     onClick={() => handleOpenEdit(product)}
                     className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold text-slate-400 hover:bg-slate-800 rounded-lg border border-slate-800 transition-colors"
                   >
-                    <Edit2 size={16} /> Edit
+                    <Edit2 size={16} /> Edit Stok
                   </button>
                   <button
                     onClick={() => handleOpenStock(product)}
                     className="flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold text-primary hover:bg-primary/10 rounded-lg border border-primary/20 transition-colors"
                   >
-                    <Package size={16} /> Stok
+                    <Package size={16} /> Atur Stok
                   </button>
                 </div>
               </div>
