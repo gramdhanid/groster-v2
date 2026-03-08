@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import {
   Plus,
-  Trash2,
   Tag,
   Boxes,
   Barcode,
@@ -16,6 +15,8 @@ import { PRODUCT_CATEGORIES } from "../../types/product";
 import ConfirmDialog from "../ui/ConfirmDialog";
 import BarcodeScanner from "./BarcodeScanner";
 import { BottomSheetModal } from "../ui/BottomSheetModal";
+import UnitSelectorModal from "./UnitSelectorModal";
+import SwipeableProductCard from "./SwipeableProductCard";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export default function ProductModal({
   const [suggestedCategory, setSuggestedCategory] = useState<string>("");
   const [pendingCategory, setPendingCategory] = useState<string>("");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [showUnitSelector, setShowUnitSelector] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -94,18 +96,7 @@ export default function ProductModal({
   }, [initialData, isOpen]);
 
   const handleAddUnit = () => {
-    setUnits([
-      ...units,
-      {
-        id: crypto.randomUUID(),
-        unit_type: "",
-        price_sell: 0,
-        price_cost: 0,
-        qty_per_base_unit: 1,
-        is_default: false,
-      },
-    ]);
-    setHasUnsavedChanges(true);
+    setShowUnitSelector(true);
   };
 
   const handleRemoveUnit = (id: string) => {
@@ -381,20 +372,13 @@ export default function ProductModal({
 
           <div className="space-y-4">
             {units.map((unit, index) => (
-              <div
+              <SwipeableProductCard
                 key={unit.id}
-                className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl relative"
+                onDelete={() => handleRemoveUnit(unit.id)}
+                enabled={unit.unit_type !== "Pcs"}
               >
-                {units.length > 1 && (
-                  <button
-                    onClick={() => handleRemoveUnit(unit.id)}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full shadow-lg"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                )}
-
-                <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl">
+                  <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
                       Nama Satuan
@@ -402,13 +386,13 @@ export default function ProductModal({
                     <input
                       type="text"
                       value={unit.unit_type}
-                      disabled={unit.unit_type === "Pcs"}
+                      disabled={true}
                       onFocus={handleFocus}
                       onChange={(e) =>
                         updateUnit(unit.id, "unit_type", e.target.value)
                       }
                       placeholder="Pcs, Dus, Karung, dll"
-                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${unit.unit_type === "Pcs" ? "opacity-50 grayscale" : ""}`}
+                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors opacity-50 grayscale`}
                     />
                   </div>
                   <div className="space-y-1">
@@ -494,7 +478,17 @@ export default function ProductModal({
                     </span>
                   </div>
                 )}
-              </div>
+
+                {/* Swipe hint for non-Pcs units */}
+                {unit.unit_type !== "Pcs" && (
+                  <div className="mt-3 flex items-center gap-1 text-[10px] text-slate-600 no-swipe">
+                    <span className="font-black uppercase tracking-wider">
+                      Geser ke kiri untuk hapus
+                    </span>
+                  </div>
+                )}
+                </div>
+              </SwipeableProductCard>
             ))}
           </div>
         </div>
@@ -532,6 +526,27 @@ export default function ProductModal({
           setBarcode(scannedBarcode);
           setHasUnsavedChanges(true);
         }}
+      />
+
+      {/* Unit Selector Modal */}
+      <UnitSelectorModal
+        isOpen={showUnitSelector}
+        onClose={(selectedUnits) => {
+          if (selectedUnits.length > 0) {
+            const newUnits = selectedUnits.map((unitName) => ({
+              id: crypto.randomUUID(),
+              unit_type: unitName,
+              price_sell: 0,
+              price_cost: 0,
+              qty_per_base_unit: 1,
+              is_default: false,
+            }));
+            setUnits([...units, ...newUnits]);
+            setHasUnsavedChanges(true);
+          }
+          setShowUnitSelector(false);
+        }}
+        existingUnits={units.map((u) => u.unit_type)}
       />
     </>
   );
