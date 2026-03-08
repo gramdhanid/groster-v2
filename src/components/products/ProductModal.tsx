@@ -235,6 +235,10 @@ export default function ProductModal({
           label: "Simpan Produk",
           onClick: handleSave,
         }}
+        secondaryButton={{
+          label: "Batal",
+          onClick: handleClose,
+        }}
       >
         {/* Keyboard height padding adjustment removed - style prop not supported */}
 

@@ -93,6 +93,10 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                 onClick: handleSave,
                 disabled: adjustment === 0,
             }}
+            secondaryButton={{
+                label: "Batal",
+                onClick: handleClose,
+            }}
         >
             {/* Product Name Subtitle */}
             <p className="text-sm text-slate-400 font-bold">{product.name}</p>
