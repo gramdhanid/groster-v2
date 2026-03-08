@@ -99,9 +99,9 @@ export default function UnitSelectorModal({
     }
   };
 
-  const allFilteredSelected =
-    filteredUnits.length > 0 &&
-    filteredUnits.every((u) => localSelected.includes(u.name));
+  // const allFilteredSelected =
+  //   filteredUnits.length > 0 &&
+  //   filteredUnits.every((u) => localSelected.includes(u.name));
 
   const secondaryButton: ModalButton = {
     label: "Batal",
@@ -123,16 +123,6 @@ export default function UnitSelectorModal({
       bodyClassName="p-6"
       secondaryButton={secondaryButton}
       primaryButton={primaryButton}
-      footerSummary={
-        localSelected.length > 0 ? (
-          <button
-            onClick={handleReset}
-            className="w-full py-3 rounded-xl font-bold text-sm text-slate-400 bg-slate-800 hover:bg-slate-500 transition-colors"
-          >
-            Reset Pilihan
-          </button>
-        ) : undefined
-      }
     >
       {/* Search */}
       <div className="pb-4">
@@ -152,13 +142,32 @@ export default function UnitSelectorModal({
       </div>
 
       {/* Select All Button */}
-      <div className="pb-3">
+      {/*<div className="pb-3">*/}
+      {/*  <button*/}
+      {/*    onClick={handleSelectAll}*/}
+      {/*    className="text-sm font-bold text-primary hover:text-primary/80 transition-colors"*/}
+      {/*  >*/}
+      {/*    {allFilteredSelected ? "Batal Pilih Semua" : "Pilih Semua"}*/}
+      {/*  </button>*/}
+      {/*</div>*/}
+
+      <div className="flex justify-between items-center pb-3">
         <button
-          onClick={handleSelectAll}
-          className="text-sm font-bold text-primary hover:text-primary/80 transition-colors"
+            onClick={handleSelectAll}
+            className="text-sm font-bold text-primary hover:text-primary/80 transition-colors"
         >
-          {allFilteredSelected ? "Batal Pilih Semua" : "Pilih Semua"}
+          {localSelected.length === filteredUnits.length
+              ? "Batal Pilih Semua"
+              : "Pilih Semua"}
         </button>
+        {localSelected.length > 0 && (
+            <button
+                onClick={handleReset}
+                className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors"
+            >
+              Reset {localSelected.length} Pilihan
+            </button>
+        )}
       </div>
 
       {/* Unit List */}
