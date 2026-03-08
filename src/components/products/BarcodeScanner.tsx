@@ -628,7 +628,7 @@ export default function BarcodeScanner({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4">
       <div className="relative w-full max-w-md bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-xl overflow-y-auto max-h-screen">
         <button
           onClick={onClose}
