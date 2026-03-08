@@ -9,6 +9,8 @@ import {
   Filter,
   ArrowUpDown,
   X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { formatCurrency } from "../utils/format";
 import ProductModal from "../components/products/ProductModal";
@@ -128,6 +130,23 @@ export default function ProductList() {
   // Barcode not found dialog states
   const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [showAddProductDialog, setShowAddProductDialog] = useState(false);
+
+  // Expanded units state - untuk fitur "Show more"
+  const [expandedProductIds, setExpandedProductIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleUnitsExpanded = (productId: string) => {
+    setExpandedProductIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      return next;
+    });
+  };
 
   // Request camera permission before opening scanner modal
   const handleOpenScanner = async () => {
@@ -515,29 +534,77 @@ export default function ProductList() {
                 </div>
 
                 <div className="space-y-2">
-                  {product.units.map((unit) => (
-                    <div
-                      key={unit.id}
-                      className="flex justify-between items-center text-sm p-2 bg-slate-800/50 rounded-lg border border-slate-800"
-                    >
-                      <span className="font-medium text-slate-300">
-                        {unit.unit_type}{" "}
-                        {unit.is_default && (
-                          <span className="text-[10px] bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-1">
-                            Default
-                          </span>
+                  {(() => {
+                    const defaultUnit = product.units.find((u) => u.is_default);
+                    const otherUnits = product.units.filter((u) => !u.is_default);
+                    const isExpanded = expandedProductIds.has(product.id);
+                    const hasMultipleUnits = product.units.length > 1;
+
+                    return (
+                      <>
+                        {defaultUnit && (
+                          <div className="flex justify-between items-center text-sm p-2 bg-slate-800/50 rounded-lg border border-slate-800">
+                            <span className="font-medium text-slate-300">
+                              {defaultUnit.unit_type}{" "}
+                              <span className="text-xs bg-primary/20 text-primary border border-primary/30 px-1.5 py-0.5 rounded ml-1 font-bold">
+                                Utama
+                              </span>
+                            </span>
+                            <div className="text-right">
+                              <div className="font-bold text-white">
+                                {formatCurrency(defaultUnit.price_sell)}
+                              </div>
+                              <div className="text-[10px] text-slate-500">
+                                Modal: {formatCurrency(defaultUnit.price_cost)}
+                              </div>
+                            </div>
+                          </div>
                         )}
-                      </span>
-                      <div className="text-right">
-                        <div className="font-bold text-white">
-                          {formatCurrency(unit.price_sell)}
-                        </div>
-                        <div className="text-[10px] text-slate-500">
-                          Modal: {formatCurrency(unit.price_cost)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+
+                        {hasMultipleUnits && (
+                          <>
+                            {isExpanded ? (
+                              <>
+                                {otherUnits.map((unit) => (
+                                  <div
+                                    key={unit.id}
+                                    className="flex justify-between items-center text-sm p-2 bg-slate-800/50 rounded-lg border border-slate-800"
+                                  >
+                                    <span className="font-medium text-slate-300">
+                                      {unit.unit_type}
+                                    </span>
+                                    <div className="text-right">
+                                      <div className="font-bold text-white">
+                                        {formatCurrency(unit.price_sell)}
+                                      </div>
+                                      <div className="text-[10px] text-slate-500">
+                                        Modal: {formatCurrency(unit.price_cost)}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                                <button
+                                  onClick={() => toggleUnitsExpanded(product.id)}
+                                  className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+                                >
+                                  <ChevronUp size={14} />
+                                  Tutup
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => toggleUnitsExpanded(product.id)}
+                                className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
+                              >
+                                <ChevronDown size={14} />
+                                Lihat {otherUnits.length} satuan lainnya
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex gap-2 mt-2 pt-3 border-t border-slate-800">
