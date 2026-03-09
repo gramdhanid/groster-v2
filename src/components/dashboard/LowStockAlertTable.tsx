@@ -9,6 +9,7 @@ interface LowStockAlertTableProps {
   products: LowStockProduct[];
   onRestock?: (productId: string) => void;
   onProductClick?: (product: LowStockProduct) => void;
+  isLoading?: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ interface LowStockAlertTableProps {
  */
 export default function LowStockAlertTable({
   products,
+    isLoading,
   onRestock,
   onProductClick,
 }: LowStockAlertTableProps) {
@@ -73,7 +75,7 @@ export default function LowStockAlertTable({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3 max-h-80 overflow-y-auto">
-        {products.length === 0 ? (
+        {products.length === 0 && isLoading ? (
           <div className="text-center text-slate-400 py-8">
             Semua produk stoknya aman!
           </div>

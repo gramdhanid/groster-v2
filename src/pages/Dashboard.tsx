@@ -102,22 +102,20 @@ export default function Dashboard() {
       {/* Two Column Layout for Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Alert */}
-        {lowStockData && (
           <LowStockAlertTable
-            products={lowStockData}
-            onRestock={handleRestockClick}
-            onProductClick={handleProductDetailClick}
+              products={lowStockData ?? []}
+              isLoading={lowStockLoading}
+              onRestock={handleRestockClick}
+              onProductClick={handleProductDetailClick}
           />
-        )}
 
         {/* Top Selling Products */}
-        {topSellingData && (
           <TopSellingProducts
-            products={topSellingData}
-            currentTimeFilter={timeFilter}
-            onTimeFilterChange={setTimeFilter}
+              products={topSellingData ?? []}
+              isLoading={topSellingLoading}
+              currentTimeFilter={timeFilter}
+              onTimeFilterChange={setTimeFilter}
           />
-        )}
       </div>
 
       {/* Restock Modal */}

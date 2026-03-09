@@ -21,6 +21,7 @@ interface TopSellingProductsProps {
   products: TopSellingProduct[];
   currentTimeFilter?: TimeFilter;
   onTimeFilterChange?: (filter: TimeFilter) => void;
+  isLoading?: boolean;
 }
 
 /**
@@ -29,6 +30,7 @@ interface TopSellingProductsProps {
  */
 export default function TopSellingProducts({
   products,
+  isLoading,
   currentTimeFilter,
   onTimeFilterChange,
 }: TopSellingProductsProps) {
@@ -60,37 +62,50 @@ export default function TopSellingProducts({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {products.length === 0 ? (
-          <div className="text-center text-slate-400 py-8">
-            Belum ada data penjualan
+        {products.length === 0 && isLoading ? (
+          <div className="flex items-center justify-center h-[370px]">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-slate-400">Memuat data...</p>
+            </div>
           </div>
         ) : (
-          products.map((product, index) => (
-            <div key={product.id} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-primary">
-                    #{index + 1}
-                  </span>
-                  <span className="font-medium text-slate-200">
-                    {product.name}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-slate-400">
-                    {product.quantitySold} terjual
-                  </div>
-                  <div className="font-bold text-white">
-                    {formatCurrency(product.revenue)}
-                  </div>
-                </div>
+          <div
+            className={`space-y-4 transition-opacity duration-200 ${isLoading ? "opacity-40 pointer-events-none" : "opacity-100"}`}
+          >
+            {products.length === 0 ? (
+              <div className="text-center text-slate-400 py-8">
+                Belum ada data penjualan
               </div>
-              <Progress
-                value={product.percentage}
-                className="h-2 bg-slate-800"
-              />
-            </div>
-          ))
+            ) : (
+              products.map((product, index) => (
+                <div key={product.id} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-primary">
+                        #{index + 1}
+                      </span>
+                      <span className="font-medium text-slate-200">
+                        {product.name}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-slate-400">
+                        {product.quantitySold} terjual
+                      </div>
+                      <div className="font-bold text-white">
+                        {formatCurrency(product.revenue)}
+                      </div>
+                    </div>
+                  </div>
+                  <Progress
+                    value={product.percentage}
+                    className="h-2 bg-slate-800"
+                  />
+                </div>
+              ))
+            )}
+          </div>
         )}
       </CardContent>
     </Card>
