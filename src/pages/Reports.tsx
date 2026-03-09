@@ -229,28 +229,26 @@ export default function Reports() {
 
   return (
     <div className="space-y-6 pt-6">
-      <div className="flex justify-between items-center text-white">
-        <h1 className="text-3xl font-bold">Laporan</h1>
-        <button className="flex items-center gap-2 bg-[#0f172a] border border-slate-800 px-4 py-2 rounded-xl text-sm font-bold text-slate-300 shadow-sm hover:bg-slate-800 transition-colors">
-          <Download size={18} /> Export
-        </button>
-      </div>
-
       <div className="bg-[#0f172a] p-4 rounded-xl shadow-sm border border-slate-800 space-y-4">
         {/* Period Filter */}
         <div className="flex justify-between items-center">
           <span className="text-xs text-slate-500 font-medium">Periode</span>
-          <button
-            onClick={() => setIsFilterModalOpen(true)}
-            className="text-primary text-sm font-bold flex items-center gap-1 hover:opacity-80 transition-opacity"
-          >
-            <CalendarIcon size={16} />
-            {getPeriodLabel(
-              selectedPeriod.type,
-              selectedPeriod.startDate,
-              selectedPeriod.endDate,
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsFilterModalOpen(true)}
+              className="text-primary text-sm font-bold flex items-center gap-1 hover:opacity-80 transition-opacity"
+            >
+              <CalendarIcon size={16} />
+              {getPeriodLabel(
+                selectedPeriod.type,
+                selectedPeriod.startDate,
+                selectedPeriod.endDate,
+              )}
+            </button>
+            <button className="bg-[#0f172a] border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 shadow-sm hover:bg-slate-800 transition-colors flex items-center gap-1">
+              <Download size={14} /> Export
+            </button>
+          </div>
         </div>
 
         {/* Omzet & Profit */}
