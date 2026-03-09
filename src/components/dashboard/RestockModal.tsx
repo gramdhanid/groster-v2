@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Package } from "lucide-react";
 import type { ModalButton } from "@/components/ui/BottomSheetModal";
 import { Checkbox } from "@/components/ui/checkbox";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ export default function RestockModal({
 }: RestockModalProps) {
   const [selectedSupplierId, setSelectedSupplierId] = useState<string>("");
   const [orderItems, setOrderItems] = useState<RestockOrderItem[]>([]);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Initialize order items with smart defaults when modal opens
   useEffect(() => {
@@ -45,6 +48,7 @@ export default function RestockModal({
 
       setOrderItems(sortedItems);
       setSelectedSupplierId("");
+      setHasUnsavedChanges(false);
     }
   }, [isOpen, lowStockItems, selectedProductId]);
 
@@ -59,6 +63,7 @@ export default function RestockModal({
 
   // Handlers
   const handleToggleItem = (productId: string) => {
+    setHasUnsavedChanges(true);
     setOrderItems((prev) =>
       prev.map((item) =>
         item.productId === productId
@@ -69,6 +74,7 @@ export default function RestockModal({
   };
 
   const handleQuantityChange = (productId: string, quantity: number) => {
+    setHasUnsavedChanges(true);
     setOrderItems((prev) =>
       prev.map((item) =>
         item.productId === productId
@@ -103,14 +109,38 @@ Terima kasih.`;
     const whatsappUrl = `https://wa.me/${supplier.phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, "_blank");
 
+    setHasUnsavedChanges(false);
     onClose();
+  };
+
+  const handleSupplierChange = (value: string) => {
+    setHasUnsavedChanges(true);
+    setSelectedSupplierId(value);
+  };
+
+  const handleClose = () => {
+    if (hasUnsavedChanges) {
+      setShowConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setShowConfirm(false);
+    setHasUnsavedChanges(false);
+    onClose();
+  };
+
+  const handleCancelConfirm = () => {
+    setShowConfirm(false);
   };
 
   const isValid = selectedSupplierId && selectedCount > 0;
 
   const secondaryButton: ModalButton = {
     label: "Batal",
-    onClick: onClose,
+    onClick: handleClose,
   };
 
   const primaryButton: ModalButton = {
@@ -122,7 +152,7 @@ Terima kasih.`;
   return (
     <BottomSheetModal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Pesanan Restok"
       icon={<Package size={20} />}
       size="md"
@@ -145,7 +175,7 @@ Terima kasih.`;
         </h3>
         <Select
           value={selectedSupplierId}
-          onValueChange={setSelectedSupplierId}
+          onValueChange={handleSupplierChange}
         >
           <SelectTrigger className="bg-slate-800/50 border-slate-700">
             <SelectValue placeholder="Pilih supplier..." />
@@ -230,6 +260,17 @@ Terima kasih.`;
           ))}
         </div>
       </section>
+
+      <ConfirmDialog
+        isOpen={showConfirm}
+        onClose={handleCancelConfirm}
+        onConfirm={handleConfirmClose}
+        title="Batalkan Perubahan?"
+        message="Anda memiliki perubahan pesanan restok yang belum disimpan. Apakah Anda yakin ingin menutup?"
+        confirmText="Ya, Tutup"
+        cancelText="Batal"
+        variant="warning"
+      />
     </BottomSheetModal>
   );
 }
