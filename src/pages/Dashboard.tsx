@@ -17,22 +17,29 @@ import { useCashflow } from "@/hooks/dashboard/useCashflow";
 import type { TimeFilter, LowStockProduct } from "@/types/dashboard";
 
 export default function Dashboard() {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('7days');
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("7days");
   const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
   const [isCashflowModalOpen, setIsCashflowModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-  const [selectedDetailProduct, setSelectedDetailProduct] = useState<LowStockProduct | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null,
+  );
+  const [selectedDetailProduct, setSelectedDetailProduct] =
+    useState<LowStockProduct | null>(null);
 
   // Fetch all data using TanStack Query hooks
   const { data: dailyData, isLoading: dailyLoading } = useDailyMetrics();
-  const { data: lowStockData, isLoading: lowStockLoading } = useLowStockProducts();
-  const { data: topSellingData, isLoading: topSellingLoading } = useTopSellingProducts(5, timeFilter);
-  const { data: salesTrendData, isLoading: salesTrendLoading } = useSalesTrend(timeFilter);
+  const { data: lowStockData, isLoading: lowStockLoading } =
+    useLowStockProducts();
+  const { data: topSellingData, isLoading: topSellingLoading } =
+    useTopSellingProducts(5, timeFilter);
+  const { data: salesTrendData, isLoading: salesTrendLoading } =
+    useSalesTrend(timeFilter);
   const { data: suppliersData } = useSuppliers();
   const { data: cashflowData, isLoading: cashflowLoading } = useCashflow();
 
-  const isLoading = dailyLoading || lowStockLoading || topSellingLoading || salesTrendLoading;
+  const isLoading =
+    dailyLoading || lowStockLoading || topSellingLoading || salesTrendLoading;
 
   const handleRestockClick = (productId: string) => {
     setIsRestockModalOpen(true);
@@ -55,8 +62,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pt-6">
-      <h1 className="text-3xl font-bold text-white">Ringkasan Dashboard</h1>
-
       {/* Daily Snapshot Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {dailyData && (
@@ -102,20 +107,20 @@ export default function Dashboard() {
       {/* Two Column Layout for Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Low Stock Alert */}
-          <LowStockAlertTable
-              products={lowStockData ?? []}
-              isLoading={lowStockLoading}
-              onRestock={handleRestockClick}
-              onProductClick={handleProductDetailClick}
-          />
+        <LowStockAlertTable
+          products={lowStockData ?? []}
+          isLoading={lowStockLoading}
+          onRestock={handleRestockClick}
+          onProductClick={handleProductDetailClick}
+        />
 
         {/* Top Selling Products */}
-          <TopSellingProducts
-              products={topSellingData ?? []}
-              isLoading={topSellingLoading}
-              currentTimeFilter={timeFilter}
-              onTimeFilterChange={setTimeFilter}
-          />
+        <TopSellingProducts
+          products={topSellingData ?? []}
+          isLoading={topSellingLoading}
+          currentTimeFilter={timeFilter}
+          onTimeFilterChange={setTimeFilter}
+        />
       </div>
 
       {/* Restock Modal */}

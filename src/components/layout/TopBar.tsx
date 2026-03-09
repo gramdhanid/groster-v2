@@ -1,11 +1,22 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Wifi, RefreshCw } from 'lucide-react';
 import SyncStatusModal from './SyncStatusModal';
 
+const pageTitles: Record<string, string> = {
+    '/': 'Dashboard',
+    '/products': 'Daftar Produk',
+    '/reports': 'Laporan',
+    '/settings': 'Pengaturan',
+};
+
 export default function TopBar() {
+    const location = useLocation();
     const pendingCount = 0; // TODO: Connect to sync store
     const [syncStatus] = useState<'synced' | 'pending' | 'error'>('synced');
     const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+
+    const currentTitle = pageTitles[location.pathname] || 'Madju Jaya';
 
     return (
         <>
@@ -15,7 +26,7 @@ export default function TopBar() {
                         <Wifi className="text-primary" size={20} />
                     </div> */}
                     <div className="font-black text-xl tracking-tight truncate max-w-[180px]">
-                        Madju Jaya
+                        {currentTitle}
                     </div>
                 </div>
 

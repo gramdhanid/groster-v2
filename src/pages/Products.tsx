@@ -34,7 +34,7 @@ const getStockLevel = (product: Product): "low" | "medium" | "high" => {
   if (units.length === 0) return "medium";
 
   // Find the smallest qty_per_base_unit to use as reference
-  const minQtyPerBaseUnit = Math.min(...units.map(u => u.qty_per_base_unit));
+  const minQtyPerBaseUnit = Math.min(...units.map((u) => u.qty_per_base_unit));
 
   // Dynamic thresholds based on the smallest unit
   // Low = 2 * smallest unit, Medium = 10 * smallest unit
@@ -43,7 +43,7 @@ const getStockLevel = (product: Product): "low" | "medium" | "high" => {
 
   // Convert current stock to base units (all units have qty_per_base_unit)
   // The stock_qty is in the default unit, so we convert it
-  const defaultUnit = units.find(u => u.is_default) || units[0];
+  const defaultUnit = units.find((u) => u.is_default) || units[0];
   const stockInBaseUnits = product.stock_qty * defaultUnit.qty_per_base_unit;
 
   if (stockInBaseUnits < lowThreshold) return "low";
@@ -391,8 +391,6 @@ export default function ProductList() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 pt-6">
-        <h1 className="text-3xl font-bold text-white">Daftar Produk</h1>
-
         <div className="relative">
           <Search
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
@@ -550,15 +548,20 @@ export default function ProductList() {
                           : "bg-green-500/10 text-green-400 border border-green-500/20"
                     }`}
                   >
-                    {getStockLevel(product) === "low" && <AlertCircle size={14} />}
-                    Stok: {product.stock_qty} {product.units.find((u) => u.is_default)?.unit_type || ''}
+                    {getStockLevel(product) === "low" && (
+                      <AlertCircle size={14} />
+                    )}
+                    Stok: {product.stock_qty}{" "}
+                    {product.units.find((u) => u.is_default)?.unit_type || ""}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   {(() => {
                     const defaultUnit = product.units.find((u) => u.is_default);
-                    const otherUnits = product.units.filter((u) => !u.is_default);
+                    const otherUnits = product.units.filter(
+                      (u) => !u.is_default,
+                    );
                     const isExpanded = expandedProductIds.has(product.id);
                     const hasMultipleUnits = product.units.length > 1;
 
@@ -606,7 +609,9 @@ export default function ProductList() {
                                   </div>
                                 ))}
                                 <button
-                                  onClick={() => toggleUnitsExpanded(product.id)}
+                                  onClick={() =>
+                                    toggleUnitsExpanded(product.id)
+                                  }
                                   className="w-full flex items-center justify-center gap-1 py-1.5 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition-colors"
                                 >
                                   <ChevronUp size={14} />
