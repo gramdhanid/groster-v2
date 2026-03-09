@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Package, Plus, Minus, CheckCircle, AlertCircle, Layers } from 'lucide-react';
+import { Package, Plus, Minus, CheckCircle, AlertCircle, Layers, Edit3 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { BottomSheetModal } from "../ui/BottomSheetModal";
 import ConfirmDialog from "../ui/ConfirmDialog";
 
@@ -26,14 +27,18 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
     const [adjustment, setAdjustment] = useState<number>(0);
     const [selectedUnit, setSelectedUnit] = useState<ProductUnit | null>(null);
     const [reason, setReason] = useState('Stok Masuk');
+    const [customReason, setCustomReason] = useState('');
     const [finalStock, setFinalStock] = useState(0);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
     useEffect(() => {
         if (product && product.units.length > 0) {
             setFinalStock(product.stock_qty);
             setAdjustment(0);
+            setReason('Stok Masuk');
+            setCustomReason('');
             const defaultUnit = product.units.find(u => u.is_default) || product.units[0];
             setSelectedUnit(defaultUnit);
             setHasUnsavedChanges(false);
@@ -49,8 +54,26 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
 
     const handleSave = () => {
         if (!product) return;
+        setShowUpdateConfirm(true);
+    };
+
+    const handleConfirmUpdate = () => {
+        if (!product) return;
         onSave(product.id, finalStock);
+        setShowUpdateConfirm(false);
+        setHasUnsavedChanges(false);
+
+        const changeText = totalImpact >= 0 ? `+${Math.abs(totalImpact)}` : `-${Math.abs(totalImpact)}`;
+        toast.success(
+            `Stok ${product.name} berhasil diupdate! ${product.stock_qty} → ${finalStock} (${changeText})`,
+            { duration: 3000 }
+        );
+
         onClose();
+    };
+
+    const handleCancelUpdateConfirm = () => {
+        setShowUpdateConfirm(false);
     };
 
     const formatNumber = (num: number) => {
@@ -87,13 +110,11 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
             title="Update Stok"
             icon={<Package className="text-primary" />}
             size="md"
-            bodyClassName="p-6 space-y-6 bg-[#020617]"
+            bodyClassName="p-6 space-y-8 bg-[#020617]"
             primaryButton={{
-                label: adjustment !== 0
-                    ? `Update Stok (${adjustment > 0 ? 'Tambah' : 'Kurangi'} ${Math.abs(totalImpact)} ${product.units.find(u => u.is_default)?.unit_type || 'Pcs'})`
-                    : "Update Stok",
+                label: "Update Stok",
                 onClick: handleSave,
-                disabled: adjustment === 0,
+                disabled: adjustment === 0 || (reason === 'Lainnya' && customReason.trim() === ''),
             }}
             secondaryButton={{
                 label: "Batal",
@@ -101,12 +122,18 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
             }}
         >
             {/* Product Name Subtitle */}
-            <p className="text-sm text-slate-400 font-bold">{product.name}</p>
+            <p className="text-base text-slate-400 font-bold">{product.name}</p>
 
-            {/* Visual Comparison */}
+            {/* Section: Informasi Stok */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
+                    <Package size={14} /> Informasi Stok
+                </div>
+
+                {/* Visual Comparison */}
             <div className="flex items-center justify-between gap-3">
                 <div className="flex-1 text-center p-3 bg-slate-900 rounded-2xl border border-slate-800">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Stok Awal</div>
+                    <div className="text-xs font-black uppercase tracking-wider text-slate-500 mb-1">Stok Awal</div>
                     <div className="text-xl font-black">{formatNumber(product.stock_qty)}</div>
                 </div>
                 <div className="flex flex-col items-center">
@@ -116,9 +143,10 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                     </span>
                 </div>
                 <div className="flex-1 text-center p-3 bg-primary/10 rounded-2xl border border-primary/20">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Stok Akhir</div>
+                    <div className="text-xs font-black uppercase tracking-wider text-primary mb-1">Stok Akhir</div>
                     <div className="text-xl font-black text-primary">{formatNumber(finalStock)}</div>
                 </div>
+            </div>
             </div>
 
             {/* Unit Selection */}
@@ -140,7 +168,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                                 }`}
                         >
                             <div className="font-bold text-sm">{unit.unit_type}</div>
-                            <div className="text-[10px] font-bold opacity-60">
+                            <div className="text-xs font-bold opacity-60">
                                 isi {unit.qty_per_base_unit} {product.units.find(u => u.is_default)?.unit_type || 'Pcs'}
                             </div>
                             {selectedUnit?.id === unit.id && (
@@ -153,8 +181,14 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                 </div>
             </div>
 
-            <div className="space-y-6">
-                <div className="space-y-2">
+            {/* Section: Penyesuaian */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2 text-primary font-black uppercase tracking-widest text-xs">
+                    <Plus size={14} /> Penyesuaian
+                </div>
+
+                <div className="space-y-6">
+                    <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-slate-500">
                         Jumlah ({selectedUnit?.unit_type})
                     </label>
@@ -191,9 +225,11 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                 </div>
 
                 <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-500">Alasan Perubahan</label>
+                    <label className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                        <AlertCircle size={14} /> Alasan Perubahan
+                    </label>
                     <div className="grid grid-cols-2 gap-2">
-                        {['Stok Masuk', 'Stok Keluar', 'Penyesuaian', 'Rusak'].map(r => (
+                        {['Stok Masuk', 'Stok Keluar', 'Penyesuaian', 'Rusak', 'Lainnya'].map(r => (
                             <button
                                 key={r}
                                 onClick={() => {
@@ -205,20 +241,34 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                                         if (adjustment < 0) setAdjustment(prev => Math.abs(prev));
                                     }
                                 }}
-                                className={`py-3 px-2 rounded-xl text-xs font-black transition-all border ${reason === r
+                                className={`py-4 px-3 rounded-xl text-sm font-black transition-all border flex items-center justify-center gap-2 ${reason === r
                                     ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
                                     : 'bg-slate-800 text-slate-400 border-slate-700'
                                     }`}
                             >
+                                {r === 'Lainnya' && <Edit3 size={14} />}
                                 {r}
                             </button>
                         ))}
                     </div>
+                    {reason === 'Lainnya' && (
+                        <input
+                            type="text"
+                            value={customReason}
+                            onChange={(e) => {
+                                setCustomReason(e.target.value);
+                                setHasUnsavedChanges(true);
+                            }}
+                            placeholder="Tulis alasan lainnya..."
+                            className="w-full h-12 px-4 bg-slate-800/50 border border-slate-700 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-primary placeholder:text-slate-600"
+                        />
+                    )}
+                </div>
                 </div>
             </div>
 
             {finalStock < 0 && (
-                <div className="flex items-start gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 italic text-[10px] font-bold">
+                <div className="flex items-start gap-2 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-xs font-bold">
                     <AlertCircle size={14} className="shrink-0" />
                     <span>Perhatian: Stok akan menjadi negatif ({finalStock}).</span>
                 </div>
@@ -230,10 +280,21 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
             onClose={handleCancelConfirm}
             onConfirm={handleConfirmClose}
             title="Batalkan Perubahan?"
-            message="Anda memiliki perubahan stok yang belum disimpan."
+            message="Anda memiliki perubahan stok yang belum disimpan. Apakah Anda yakin ingin menutup tanpa menyimpan?"
             confirmText="Ya, Tutup"
             cancelText="Batal"
             variant="warning"
+        />
+
+        <ConfirmDialog
+            isOpen={showUpdateConfirm}
+            onClose={handleCancelUpdateConfirm}
+            onConfirm={handleConfirmUpdate}
+            title="Konfirmasi Update Stok"
+            message={`Apakah Anda yakin ingin mengupdate stok ${product.name} dari ${formatNumber(product.stock_qty)} menjadi ${formatNumber(finalStock)}?`}
+            confirmText="Ya, Update"
+            cancelText="Batal"
+            variant="info"
         />
         </>
     );
