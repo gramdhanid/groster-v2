@@ -78,7 +78,7 @@ export default function RestockModal({
     setOrderItems((prev) =>
       prev.map((item) =>
         item.productId === productId
-          ? { ...item, quantity: Math.max(1, quantity) }
+          ? { ...item, quantity: Math.max(0, quantity) }
           : item,
       ),
     );
@@ -239,22 +239,27 @@ Terima kasih.`;
               </div>
 
               <div
-                className="flex items-center gap-2"
+                className="flex flex-col items-end gap-1"
                 onClick={(e) => e.stopPropagation()}
               >
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleQuantityChange(
-                      item.productId,
-                      parseInt(e.target.value) || 0,
-                    )
-                  }
-                  disabled={!item.selected}
-                  className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-center text-sm font-bold focus:ring-2 focus:ring-primary outline-none disabled:opacity-50"
-                />
-                <span className="text-xs text-slate-500">pcs</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={item.quantity || ""}
+                    onChange={(e) =>
+                      handleQuantityChange(
+                        item.productId,
+                        parseInt(e.target.value) || 0,
+                      )
+                    }
+                    disabled={!item.selected}
+                    className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-center text-sm font-bold focus:ring-2 focus:ring-primary outline-none disabled:opacity-50"
+                  />
+                  <span className="text-xs text-slate-500">pcs</span>
+                </div>
+                {item.quantity === 0 && (
+                  <span className="text-xs text-red-400">min 1 pcs</span>
+                )}
               </div>
             </div>
           ))}
