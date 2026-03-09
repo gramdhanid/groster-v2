@@ -27,6 +27,30 @@ import type { Product } from "../types/product";
 import { PRODUCT_CATEGORIES } from "../types/product";
 import type { ProductFilters } from "../types/filter";
 
+// Helper function to determine stock level based on unit context
+// Converts stock to base units (smallest unit) and checks against dynamic thresholds
+const getStockLevel = (product: Product): "low" | "medium" | "high" => {
+  const units = product.units;
+  if (units.length === 0) return "medium";
+
+  // Find the smallest qty_per_base_unit to use as reference
+  const minQtyPerBaseUnit = Math.min(...units.map(u => u.qty_per_base_unit));
+
+  // Dynamic thresholds based on the smallest unit
+  // Low = 2 * smallest unit, Medium = 10 * smallest unit
+  const lowThreshold = minQtyPerBaseUnit * 2;
+  const mediumThreshold = minQtyPerBaseUnit * 10;
+
+  // Convert current stock to base units (all units have qty_per_base_unit)
+  // The stock_qty is in the default unit, so we convert it
+  const defaultUnit = units.find(u => u.is_default) || units[0];
+  const stockInBaseUnits = product.stock_qty * defaultUnit.qty_per_base_unit;
+
+  if (stockInBaseUnits < lowThreshold) return "low";
+  if (stockInBaseUnits < mediumThreshold) return "medium";
+  return "high";
+};
+
 const INITIAL_PRODUCTS: Product[] = [
   {
     id: "1",
@@ -192,11 +216,9 @@ export default function ProductList() {
 
       const matchesStock =
         filters.stockFilter === "all" ||
-        (filters.stockFilter === "low" && p.stock_qty < 100) ||
-        (filters.stockFilter === "medium" &&
-          p.stock_qty >= 100 &&
-          p.stock_qty <= 200) ||
-        (filters.stockFilter === "high" && p.stock_qty > 200);
+        (filters.stockFilter === "low" && getStockLevel(p) === "low") ||
+        (filters.stockFilter === "medium" && getStockLevel(p) === "medium") ||
+        (filters.stockFilter === "high" && getStockLevel(p) === "high");
 
       return matchesSearch && matchesCategory && matchesPrice && matchesStock;
     })
@@ -521,15 +543,15 @@ export default function ProductList() {
                   </div>
                   <div
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                      product.stock_qty < 10
+                      getStockLevel(product) === "low"
                         ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                        : product.stock_qty < 50
+                        : getStockLevel(product) === "medium"
                           ? "bg-orange-500/10 text-orange-400 border border-orange-500/20"
                           : "bg-green-500/10 text-green-400 border border-green-500/20"
                     }`}
                   >
-                    {product.stock_qty < 10 && <AlertCircle size={14} />}
-                    Stok: {product.stock_qty}
+                    {getStockLevel(product) === "low" && <AlertCircle size={14} />}
+                    Stok: {product.stock_qty} {product.units.find((u) => u.is_default)?.unit_type || ''}
                   </div>
                 </div>
 

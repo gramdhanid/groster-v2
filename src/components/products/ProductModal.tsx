@@ -106,6 +106,26 @@ export default function ProductModal({
     }
   };
 
+  const handleSetDefaultUnit = (unitId: string) => {
+    const oldDefaultUnit = units.find((u) => u.is_default);
+    const newDefaultUnit = units.find((u) => u.id === unitId);
+
+    if (oldDefaultUnit && newDefaultUnit && oldDefaultUnit.id !== newDefaultUnit.id) {
+      // Convert stock from old default unit to new default unit
+      const conversionFactor = oldDefaultUnit.qty_per_base_unit / newDefaultUnit.qty_per_base_unit;
+      setStockQty((prev) => Math.round(prev * conversionFactor));
+    }
+
+    // Update is_default flags
+    setUnits(
+      units.map((u) => ({
+        ...u,
+        is_default: u.id === unitId,
+      }))
+    );
+    setHasUnsavedChanges(true);
+  };
+
   const updateUnit = (id: string, field: keyof ProductUnit, value: any) => {
     setUnits(units.map((u) => (u.id === id ? { ...u, [field]: value } : u)));
     setHasUnsavedChanges(true);
@@ -371,11 +391,11 @@ export default function ProductModal({
           </div>
 
           <div className="space-y-4">
-            {units.map((unit, index) => (
+            {units.map((unit) => (
               <SwipeableProductCard
                 key={unit.id}
                 onDelete={() => handleRemoveUnit(unit.id)}
-                enabled={unit.unit_type !== "Pcs"}
+                enabled={!unit.is_default}
               >
                 <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl">
                   <div className="grid grid-cols-2 gap-4">
@@ -386,23 +406,22 @@ export default function ProductModal({
                     <input
                       type="text"
                       value={unit.unit_type}
-                      disabled={true}
                       onFocus={handleFocus}
                       onChange={(e) =>
                         updateUnit(unit.id, "unit_type", e.target.value)
                       }
                       placeholder="Pcs, Dus, Karung, dll"
-                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors opacity-50 grayscale`}
+                      className="w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors"
                     />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                      Isi per {units[0].unit_type || "Satuan Dasar"}
+                      Isi per {units.find(u => u.is_default)?.unit_type || "Satuan Dasar"}
                     </label>
                     <input
                       type="text"
                       inputMode="numeric"
-                      disabled={index === 0}
+                      disabled={unit.is_default}
                       onFocus={handleFocus}
                       value={formatNumber(unit.qty_per_base_unit)}
                       onChange={(e) =>
@@ -412,7 +431,7 @@ export default function ProductModal({
                           parseNumber(e.target.value),
                         )
                       }
-                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${index === 0 ? "opacity-50 grayscale" : ""}`}
+                      className={`w-full bg-slate-900 border border-slate-700 p-3 rounded-xl outline-none font-bold focus:border-primary transition-colors ${unit.is_default ? "opacity-50 grayscale" : ""}`}
                     />
                   </div>
                   <div className="col-span-2 space-y-1">
@@ -465,23 +484,46 @@ export default function ProductModal({
                   </div>
                 </div>
 
+                {/* Laba badge and Satuan Utama button - side by side */}
                 {unit.price_sell > 0 && unit.price_cost > 0 && (
-                  <div className="mt-4 flex gap-4 text-[10px] font-bold">
-                    <span className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20">
-                      Laba:{" "}
-                      {(
-                        ((unit.price_sell - unit.price_cost) /
-                          unit.price_sell) *
-                        100
-                      ).toFixed(1)}
-                      % ({unit.price_sell - unit.price_cost})
+                  <div className="mt-4 flex items-center justify-between gap-2">
+                    <span className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 text-[10px] font-bold">
+                      Laba: {((unit.price_sell - unit.price_cost) / unit.price_sell * 100).toFixed(1)}% ({unit.price_sell - unit.price_cost})
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefaultUnit(unit.id)}
+                      className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
+                        unit.is_default
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                      }`}
+                    >
+                      {unit.is_default ? 'Satuan Utama' : 'Jadikan Utama'}
+                    </button>
                   </div>
                 )}
 
-                {/* Swipe hint for non-Pcs units */}
-                {unit.unit_type !== "Pcs" && (
-                  <div className="mt-3 flex items-center gap-1 text-[10px] text-slate-600 no-swipe">
+                {/* Jika belum ada harga, tombol satuan utama tetap muncul sendiri */}
+                {!(unit.price_sell > 0 && unit.price_cost > 0) && (
+                  <div className="mt-3 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefaultUnit(unit.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                        unit.is_default
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                      }`}
+                    >
+                      {unit.is_default ? 'Satuan Utama' : 'Jadikan Utama'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Swipe hint for non-default units */}
+                {!unit.is_default && (
+                  <div className="mt-2 flex items-center gap-1 text-[10px] text-slate-600 no-swipe">
                     <span className="font-black uppercase tracking-wider">
                       Geser ke kiri untuk hapus
                     </span>

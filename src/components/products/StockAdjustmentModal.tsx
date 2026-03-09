@@ -33,7 +33,8 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
         if (product && product.units.length > 0) {
             setFinalStock(product.stock_qty);
             setAdjustment(0);
-            setSelectedUnit(product.units[0]); // Default to first unit (usually base)
+            const defaultUnit = product.units.find(u => u.is_default) || product.units[0];
+            setSelectedUnit(defaultUnit);
             setHasUnsavedChanges(false);
         }
     }, [product, isOpen]);
@@ -88,7 +89,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
             bodyClassName="p-6 space-y-6 bg-[#020617]"
             primaryButton={{
                 label: adjustment !== 0
-                    ? `Update Stok (${adjustment > 0 ? 'Tambah' : 'Kurangi'} ${Math.abs(totalImpact)} Pcs)`
+                    ? `Update Stok (${adjustment > 0 ? 'Tambah' : 'Kurangi'} ${Math.abs(totalImpact)} ${product.units.find(u => u.is_default)?.unit_type || 'Pcs'})`
                     : "Update Stok",
                 onClick: handleSave,
                 disabled: adjustment === 0,
@@ -139,7 +140,7 @@ export default function StockAdjustmentModal({ isOpen, onClose, onSave, product 
                         >
                             <div className="font-bold text-sm">{unit.unit_type}</div>
                             <div className="text-[10px] font-bold opacity-60">
-                                isi {unit.qty_per_base_unit} {product.units[0].unit_type}
+                                isi {unit.qty_per_base_unit} {product.units.find(u => u.is_default)?.unit_type || 'Pcs'}
                             </div>
                             {selectedUnit?.id === unit.id && (
                                 <div className="absolute top-1 right-2">
