@@ -78,7 +78,7 @@ export default function RestockModal({
     setOrderItems((prev) =>
       prev.map((item) =>
         item.productId === productId
-          ? { ...item, quantity: Math.max(0, quantity) }
+          ? { ...item, quantity: Math.min(9999, Math.max(0, quantity)) }
           : item,
       ),
     );
@@ -253,12 +253,16 @@ Terima kasih.`;
                       )
                     }
                     disabled={!item.selected}
+                    max={9999}
                     className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-center text-sm font-bold focus:ring-2 focus:ring-primary outline-none disabled:opacity-50"
                   />
                   <span className="text-xs text-slate-500">pcs</span>
                 </div>
                 {item.quantity === 0 && (
                   <span className="text-xs text-red-400">min 1 pcs</span>
+                )}
+                {item.quantity === 9999 && (
+                  <span className="text-xs text-orange-400">max 9999 pcs</span>
                 )}
               </div>
             </div>
