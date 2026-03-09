@@ -17,6 +17,13 @@ import BarcodeScanner from "./BarcodeScanner";
 import { BottomSheetModal } from "../ui/BottomSheetModal";
 import UnitSelectorModal from "./UnitSelectorModal";
 import SwipeableProductCard from "./SwipeableProductCard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -281,28 +288,28 @@ export default function ProductModal({
               <label className="text-sm font-bold text-slate-400">
                 Kategori
               </label>
-              <select
+              <Select
                 value={category}
-                onChange={(e) => {
-                  const val = e.target.value;
+                onValueChange={(val) => {
                   setCategory(val);
                   setIsCustom(val === "NEW");
                   setHasUnsavedChanges(true);
                 }}
-                className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold appearance-none"
               >
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c} className="bg-[#0f172a]">
-                    {c}
-                  </option>
-                ))}
-                <option
-                  value="NEW"
-                  className="bg-[#0f172a] text-primary font-black"
-                >
-                  + Kategori Baru
-                </option>
-              </select>
+                <SelectTrigger className="w-full bg-slate-800/50 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-primary outline-none font-bold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="NEW" className="text-primary font-bold">
+                    + Kategori Baru
+                  </SelectItem>
+                </SelectContent>
+              </Select>
               {isCustom && (
                 <div className="mt-2 animate-in slide-in-from-top-2 duration-200">
                   <input
