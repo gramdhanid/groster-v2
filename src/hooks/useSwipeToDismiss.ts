@@ -52,6 +52,7 @@ export function useSwipeToDismiss({
   const [isDragging, setIsDragging] = useState(false);
   const [canPullToDismiss, setCanPullToDismiss] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
+  const closeAttemptRef = useRef(false);
 
   // Body handlers - check scroll position before allowing drag
   const handleDragStart = useCallback((e: React.TouchEvent | React.MouseEvent) => {
@@ -86,13 +87,22 @@ export function useSwipeToDismiss({
   const handleDragEnd = useCallback(() => {
     // If drag exceeds threshold, close modal
     if (currentDragY > threshold) {
+      closeAttemptRef.current = true;
       onClose();
+      // Check if modal is still open (close was prevented)
+      setTimeout(() => {
+        if (isOpen) {
+          // Close was prevented, reset position
+          setCurrentDragY(0);
+        }
+        closeAttemptRef.current = false;
+      }, 100);
     } else {
       // Return to original position
       setCurrentDragY(0);
     }
     setIsDragging(false);
-  }, [currentDragY, threshold, onClose]);
+  }, [currentDragY, threshold, onClose, isOpen]);
 
   // Reset drag state when modal opens
   useEffect(() => {
