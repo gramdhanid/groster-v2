@@ -7,6 +7,7 @@ interface ProductUnit {
     id: string;
     unit_type: string;
     qty_per_base_unit: number;
+    is_default: boolean;
 }
 
 interface StockAdjustmentModalProps {
