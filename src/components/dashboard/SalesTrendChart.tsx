@@ -73,11 +73,13 @@ export default function SalesTrendChart({
   };
 
   return (
-    <Card className="bg-[#0f172a] border-slate-800">
-      <CardHeader>
+    <Card className="bg-[#0f172a] border-slate-800 hover:border-primary/50 transition-colors duration-200">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-transparent">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <CardTitle className="flex items-center gap-2 text-white">
-            <TrendingUp className="text-primary" size={20} />
+            <div className="bg-gradient-to-br from-primary to-green-600 p-1.5 rounded-lg">
+              <TrendingUp className="text-white" size={16} />
+            </div>
             Analisis Tren Penjualan
           </CardTitle>
           <div className="flex w-full sm:w-auto flex-wrap items-end gap-1.5 sm:gap-3">
@@ -86,7 +88,7 @@ export default function SalesTrendChart({
               value={currentTimeFilter}
               onValueChange={(value) => onTimeFilterChange(value as TimeFilter)}
             >
-              <SelectTrigger className="flex-1 sm:w-[140px] bg-slate-800 border-slate-700 text-white text-xs sm:text-sm">
+              <SelectTrigger className="flex-1 sm:w-[140px] bg-slate-800/80 hover:bg-gradient-to-r hover:from-primary/10 hover:to-transparent border-slate-700 text-white text-xs sm:text-sm transition-all">
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent>
@@ -103,7 +105,7 @@ export default function SalesTrendChart({
               value={selectedMetric}
               onValueChange={(value) => setSelectedMetric(value as SalesMetric)}
             >
-              <SelectTrigger className="flex-1 sm:w-[140px] bg-slate-800 border-slate-700 text-white text-xs sm:text-sm">
+              <SelectTrigger className="flex-1 sm:w-[140px] bg-slate-800/80 hover:bg-gradient-to-r hover:from-primary/10 hover:to-transparent border-slate-700 text-white text-xs sm:text-sm transition-all">
                 <SelectValue placeholder="Metrik" />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +124,7 @@ export default function SalesTrendChart({
         {isLoading ? (
           <div className="flex items-center justify-center h-[250px]">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="w-10 h-10 border-4 border-transparent border-t-primary rounded-full animate-spin bg-gradient-to-br from-primary/20 to-green-600/20" />
               <p className="text-sm text-slate-400">Memuat data...</p>
             </div>
           </div>
