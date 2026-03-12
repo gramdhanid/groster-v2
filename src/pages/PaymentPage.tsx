@@ -8,6 +8,7 @@ import ReceiptView from "../components/pos/ReceiptView";
 import CashPaymentPanel from "../components/payment/CashPaymentPanel";
 import NonCashPaymentPanel from "../components/payment/NonCashPaymentPanel";
 import CreditPaymentPanel from "../components/payment/CreditPaymentPanel";
+import { useHorizontalSwipe } from "../hooks/useHorizontalSwipe";
 import type { Customer } from "../store/useCartStore";
 
 type PaymentTab = "CASH" | "NON_CASH" | "KREDIT";
@@ -31,6 +32,7 @@ export default function PaymentPage() {
   const feeAmount = additionalFee?.amount || 0;
 
   const [tab, setTab] = useState<PaymentTab>("CASH");
+  const tabIndex: number = tab === "CASH" ? 0 : tab === "NON_CASH" ? 1 : 2;
   const [paidAmount, setPaidAmount] = useState<number>(total);
   const [customInput, setCustomInput] = useState<string>(total.toString());
   const [selectedNonCashMethod, setSelectedNonCashMethod] = useState("QRIS");
@@ -59,6 +61,36 @@ export default function PaymentPage() {
       setCustomInput("0");
     }
   };
+
+  // Setup swipe gesture handlers for horizontal tab navigation
+  const { swipeX, isDragging, touchHandlers } = useHorizontalSwipe({
+    onSwipeLeft: () => {
+      // Swipe left (←): CASH → NON_CASH → KREDIT
+      if (tab === "CASH") handleTabChange("NON_CASH");
+      else if (tab === "NON_CASH") handleTabChange("KREDIT");
+    },
+    onSwipeRight: () => {
+      // Swipe right (→): KREDIT → NON_CASH → CASH
+      if (tab === "KREDIT") handleTabChange("NON_CASH");
+      else if (tab === "NON_CASH") handleTabChange("CASH");
+    },
+    threshold: 80, // px
+  });
+
+  // Constrain swipeX so indicator stays within bounds
+  const constrainedSwipeX = isDragging
+    ? (() => {
+        if (tabIndex === 0) {
+          // First tab: can only move right (positive swipeX = move toward next tab)
+          return Math.max(0, swipeX);
+        } else if (tabIndex === 2) {
+          // Last tab: can only move left (negative swipeX = move toward previous tab)
+          return Math.min(0, swipeX);
+        }
+        // Middle tab: both directions allowed
+        return swipeX;
+      })()
+    : 0;
 
   const handleExit = () => {
     if (completedTransaction) {
@@ -165,12 +197,24 @@ export default function PaymentPage() {
         </div>
 
         {/* Payment Method Tabs */}
-        <div className="flex shadow-lg bg-[#0f172a] border-b border-slate-800">
+        <div className="flex shadow-lg bg-[#0f172a] border-b border-slate-800 relative">
+          {/* Animated indicator */}
+          <div
+            className="absolute bottom-0 h-1 transition-transform duration-200 ease-out"
+            style={{
+              width: '33.333%',
+              transform: isDragging
+                ? `translateX(calc(${tabIndex * 100}% - ${constrainedSwipeX / 3}px))`
+                : `translateX(${tabIndex * 100}%)`,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+              backgroundColor: tab === 'CASH' ? '#4ade80' : tab === 'NON_CASH' ? '#60a5fa' : '#f87171'
+            }}
+          />
           <button
             onClick={() => handleTabChange("CASH")}
             className={`flex-1 py-4 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
               tab === "CASH"
-                ? "text-green-400 border-b-2 border-green-400 bg-green-500/5"
+                ? `text-green-400 ${isDragging ? '' : 'border-b-2 border-green-400'} bg-green-500/5`
                 : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -181,7 +225,7 @@ export default function PaymentPage() {
             onClick={() => handleTabChange("NON_CASH")}
             className={`flex-1 py-4 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
               tab === "NON_CASH"
-                ? "text-blue-400 border-b-2 border-blue-400 bg-blue-500/5"
+                ? `text-blue-400 ${isDragging ? '' : 'border-b-2 border-blue-400'} bg-blue-500/5`
                 : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -192,7 +236,7 @@ export default function PaymentPage() {
             onClick={() => handleTabChange("KREDIT")}
             className={`flex-1 py-4 font-black text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
               tab === "KREDIT"
-                ? "text-red-400 border-b-2 border-red-400 bg-red-500/5"
+                ? `text-red-400 ${isDragging ? '' : 'border-b-2 border-red-400'} bg-red-500/5`
                 : "text-slate-500 hover:text-slate-300"
             }`}
           >
@@ -258,40 +302,51 @@ export default function PaymentPage() {
         )}
 
         {/* Payment Details */}
-        <div className="flex-1 overflow-y-auto px-6">
-          {tab === "CASH" && (
-            <CashPaymentPanel
-              total={total}
-              paidAmount={paidAmount}
-              customInput={customInput}
-              onPresetClick={handlePresetClick}
-              onInputChange={(val) => {
-                setCustomInput(val);
-                setPaidAmount(Number(val) || 0);
-              }}
-            />
-          )}
+        <div className="flex-1 overflow-hidden">
+          <div
+            className="flex h-full"
+            style={{
+              transform: isDragging
+                ? `translateX(calc(${-tabIndex * 100}% + ${constrainedSwipeX}px))`
+                : `translateX(${-tabIndex * 100}%)`,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+            }}
+            {...touchHandlers}
+          >
+            <div className="w-full flex-shrink-0 overflow-y-auto px-6">
+              <CashPaymentPanel
+                total={total}
+                paidAmount={paidAmount}
+                customInput={customInput}
+                onPresetClick={handlePresetClick}
+                onInputChange={(val) => {
+                  setCustomInput(val);
+                  setPaidAmount(Number(val) || 0);
+                }}
+              />
+            </div>
 
-          {tab === "NON_CASH" && (
-            <NonCashPaymentPanel
-              selectedMethod={selectedNonCashMethod}
-              onMethodChange={setSelectedNonCashMethod}
-              referenceNumber={referenceNumber}
-              onReferenceChange={setReferenceNumber}
-            />
-          )}
+            <div className="w-full flex-shrink-0 overflow-y-auto px-6">
+              <NonCashPaymentPanel
+                selectedMethod={selectedNonCashMethod}
+                onMethodChange={setSelectedNonCashMethod}
+                referenceNumber={referenceNumber}
+                onReferenceChange={setReferenceNumber}
+              />
+            </div>
 
-          {tab === "KREDIT" && (
-            <CreditPaymentPanel
-              total={total}
-              selectedCustomer={selectedCreditCustomer}
-              onCustomerSelect={setSelectedCreditCustomer}
-              downPayment={downPayment}
-              onDownPaymentChange={setDownPayment}
-              dueDate={dueDate}
-              onDueDateChange={setDueDate}
-            />
-          )}
+            <div className="w-full flex-shrink-0 overflow-y-auto px-6">
+              <CreditPaymentPanel
+                total={total}
+                selectedCustomer={selectedCreditCustomer}
+                onCustomerSelect={setSelectedCreditCustomer}
+                downPayment={downPayment}
+                onDownPaymentChange={setDownPayment}
+                dueDate={dueDate}
+                onDueDateChange={setDueDate}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Fixed Bottom Button */}
