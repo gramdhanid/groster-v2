@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import DailySnapshotCard from "@/components/dashboard/DailySnapshotCard";
+import MetricsCard from "@/components/dashboard/MetricsCard";
 import LowStockAlertTable from "@/components/dashboard/LowStockAlertTable";
 import TopSellingProducts from "@/components/dashboard/TopSellingProducts";
 import SalesTrendChart from "@/components/dashboard/SalesTrendChart";
@@ -61,33 +61,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 pt-6">
-      {/* Daily Snapshot Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {dailyData && (
-          <>
-            <DailySnapshotCard
-              title="Hari Ini - Pendapatan"
-              value={dailyData.metrics.revenue}
-              growth={dailyData.growth.revenueGrowth}
-              icon="revenue"
-            />
-            <DailySnapshotCard
-              title="Hari Ini - Laba Bersih"
-              value={dailyData.metrics.netProfit}
-              growth={dailyData.growth.profitGrowth}
-              icon="profit"
-            />
-            <DailySnapshotCard
-              title="Hari Ini - Transaksi"
-              value={dailyData.metrics.transactions}
-              growth={dailyData.growth.transactionGrowth}
-              icon="transactions"
-              isCurrency={false}
-            />
-          </>
-        )}
-      </div>
+    <div className="space-y-6">
+      {/* Metrics Card - GoPay style */}
+      {dailyData && (
+        <MetricsCard
+          revenue={dailyData.metrics.revenue}
+          netProfit={dailyData.metrics.netProfit}
+          transactions={dailyData.metrics.transactions}
+          revenueGrowth={dailyData.growth.revenueGrowth}
+          profitGrowth={dailyData.growth.profitGrowth}
+          transactionGrowth={dailyData.growth.transactionGrowth}
+          isLoading={dailyLoading}
+        />
+      )}
 
       {/* Cashflow Card */}
       <CashflowCard
