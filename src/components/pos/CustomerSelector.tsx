@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, Search, X, Plus, Star, Phone } from 'lucide-react';
 import type { Customer } from '../../store/useCartStore';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface CustomerSelectorProps {
     isOpen: boolean;
@@ -24,6 +25,8 @@ export default function CustomerSelector({
     onSelect,
     currentCustomer,
 }: CustomerSelectorProps) {
+    useScrollLock(isOpen);
+
     const [search, setSearch] = useState('');
     const [showAddForm, setShowAddForm] = useState(false);
     const [newName, setNewName] = useState('');

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, FileText } from 'lucide-react';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface NotesModalProps {
     isOpen: boolean;
@@ -9,6 +10,8 @@ interface NotesModalProps {
 }
 
 export default function NotesModal({ isOpen, onClose, onSave, currentNotes = '' }: NotesModalProps) {
+    useScrollLock(isOpen);
+
     const [notes, setNotes] = useState(currentNotes);
 
     if (!isOpen) return null;

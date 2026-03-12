@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Package, Truck, CreditCard } from 'lucide-react';
 import type { AdditionalFee } from '../../store/useCartStore';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 interface FeeModalProps {
     isOpen: boolean;
@@ -17,6 +18,8 @@ const PREDEFINED_FEES = [
 ];
 
 export default function FeeModal({ isOpen, onClose, onApply, currentFee }: FeeModalProps) {
+    useScrollLock(isOpen);
+
     const [name, setName] = useState(currentFee?.name || '');
     const [amount, setAmount] = useState(currentFee?.amount || 0);
 
