@@ -8,6 +8,8 @@ const Products = lazy(() => import('./pages/Products'));
 const AddProduct = lazy(() => import('./pages/AddProduct'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Settings = lazy(() => import('./pages/Settings'));
+const TransactionPage = lazy(() => import('./pages/TransactionPage'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage'));
 
 // Loading skeleton/spinner
 const PageLoader = () => (
@@ -27,6 +29,8 @@ export default function App() {
             <Route path="/products/new" element={<AddProduct />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/transactions/new" element={<TransactionPage />} />
+            <Route path="/transactions/payment" element={<PaymentPage />} />
           </Route>
         </Routes>
       </Suspense>

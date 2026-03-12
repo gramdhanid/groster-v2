@@ -9,7 +9,6 @@ import {
   Barcode,
   Camera,
   DollarSign,
-  Package,
   X,
   Save,
 } from "lucide-react";
@@ -88,9 +87,14 @@ export default function AddProduct() {
     const oldDefaultUnit = units.find((u) => u.is_default);
     const newDefaultUnit = units.find((u) => u.id === unitId);
 
-    if (oldDefaultUnit && newDefaultUnit && oldDefaultUnit.id !== newDefaultUnit.id) {
+    if (
+      oldDefaultUnit &&
+      newDefaultUnit &&
+      oldDefaultUnit.id !== newDefaultUnit.id
+    ) {
       // Convert stock from old default unit to new default unit
-      const conversionFactor = oldDefaultUnit.qty_per_base_unit / newDefaultUnit.qty_per_base_unit;
+      const conversionFactor =
+        oldDefaultUnit.qty_per_base_unit / newDefaultUnit.qty_per_base_unit;
       setStockQty((prev) => Math.round(prev * conversionFactor));
     }
 
@@ -99,7 +103,7 @@ export default function AddProduct() {
       units.map((u) => ({
         ...u,
         is_default: u.id === unitId,
-      }))
+      })),
     );
     setHasUnsavedChanges(true);
   };
@@ -214,7 +218,6 @@ export default function AddProduct() {
             <ArrowLeft size={24} />
           </button>
           <div className="flex items-center gap-2">
-            <Package className="text-primary" size={24} />
             <h1 className="text-xl font-bold text-white">Tambah Produk Baru</h1>
           </div>
         </div>
@@ -385,7 +388,9 @@ export default function AddProduct() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">
-                        Isi per {units.find(u => u.is_default)?.unit_type || "Satuan Dasar"}
+                        Isi per{" "}
+                        {units.find((u) => u.is_default)?.unit_type ||
+                          "Satuan Dasar"}
                       </label>
                       <input
                         type="text"
@@ -457,18 +462,24 @@ export default function AddProduct() {
                   {unit.price_sell > 0 && unit.price_cost > 0 && (
                     <div className="mt-4 flex items-center justify-between gap-2">
                       <span className="text-green-400 bg-green-500/10 px-2 py-0.5 rounded border border-green-500/20 text-[10px] font-bold">
-                        Laba: {((unit.price_sell - unit.price_cost) / unit.price_sell * 100).toFixed(1)}% ({unit.price_sell - unit.price_cost})
+                        Laba:{" "}
+                        {(
+                          ((unit.price_sell - unit.price_cost) /
+                            unit.price_sell) *
+                          100
+                        ).toFixed(1)}
+                        % ({unit.price_sell - unit.price_cost})
                       </span>
                       <button
                         type="button"
                         onClick={() => handleSetDefaultUnit(unit.id)}
                         className={`px-3 py-1 rounded-full text-xs font-bold transition-all shrink-0 ${
                           unit.is_default
-                            ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
                         }`}
                       >
-                        {unit.is_default ? 'Satuan Utama' : 'Jadikan Utama'}
+                        {unit.is_default ? "Satuan Utama" : "Jadikan Utama"}
                       </button>
                     </div>
                   )}
@@ -481,11 +492,11 @@ export default function AddProduct() {
                         onClick={() => handleSetDefaultUnit(unit.id)}
                         className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
                           unit.is_default
-                            ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700'
+                            ? "bg-primary text-white shadow-lg shadow-primary/20"
+                            : "bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700"
                         }`}
                       >
-                        {unit.is_default ? 'Satuan Utama' : 'Jadikan Utama'}
+                        {unit.is_default ? "Satuan Utama" : "Jadikan Utama"}
                       </button>
                     </div>
                   )}
