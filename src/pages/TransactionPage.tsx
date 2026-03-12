@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
+  Camera,
   Pause,
   Search,
   ShoppingCart,
@@ -10,7 +11,6 @@ import {
   User,
   FileText,
   Receipt,
-  Check,
 } from "lucide-react";
 import { useCartStore } from "../store/useCartStore";
 import { formatCurrency } from "../utils/format";
@@ -19,6 +19,7 @@ import CartItem from "../components/pos/CartItem";
 import FeeModal from "../components/pos/FeeModal";
 import CustomerSelector from "../components/pos/CustomerSelector";
 import NotesModal from "../components/pos/NotesModal";
+import BarcodeScanner from "../components/products/BarcodeScanner";
 
 // Mock products - same as POSModal
 const MOCK_PRODUCTS = [
@@ -176,6 +177,7 @@ export default function TransactionPage() {
   const [showHoldMenu, setShowHoldMenu] = useState(false);
   const [showConfirmExit, setShowConfirmExit] = useState(false);
   const [showConfirmClear, setShowConfirmClear] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [productToRemove, setProductToRemove] = useState<{
     id: string;
     name: string;
@@ -234,6 +236,26 @@ export default function TransactionPage() {
     deleteHeldCart(heldCartId);
   };
 
+  const handleOpenScanner = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn("Camera API not available");
+        setIsScannerOpen(true);
+        return;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      stream.getTracks().forEach((track) => track.stop());
+      setIsScannerOpen(true);
+    } catch (err) {
+      console.debug("Camera permission check:", err);
+      setIsScannerOpen(true);
+    }
+  };
+
+  const handleBarcodeScan = (barcode: string) => {
+    setSearch(barcode);
+  };
+
   // Helper to check if product is in cart
   const isProductInCart = (productId: string) => {
     return items.some((i) => i.product_id === productId);
@@ -288,7 +310,7 @@ export default function TransactionPage() {
                 className="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg font-bold text-sm flex items-center gap-1 disabled:opacity-30 disabled:grayscale hover:bg-slate-700 transition-colors"
               >
                 <Pause size={16} />
-                Hold
+                Tahan
               </button>
 
               {/* Hold Menu Dropdown */}
@@ -368,8 +390,15 @@ export default function TransactionPage() {
               placeholder="Cari produk / scan barcode..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-primary font-medium text-white placeholder:text-slate-500"
+              className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-primary font-medium text-white placeholder:text-slate-500"
             />
+            <button
+              onClick={handleOpenScanner}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white"
+              title="Scan barcode dengan kamera"
+            >
+              <Camera size={20} />
+            </button>
           </div>
 
           <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
@@ -415,16 +444,9 @@ export default function TransactionPage() {
                           : "border-slate-800 hover:border-primary/50"
                       }`}
                     >
-                      {/* Selection Indicator */}
-                      {inCart && (
-                        <div className="absolute top-2 right-2 flex items-center justify-center w-6 h-6 bg-primary rounded-full shadow-lg">
-                          <Check size={14} className="text-white" />
-                        </div>
-                      )}
-
                       {/* Quantity Badge */}
-                      {qty > 1 && (
-                        <div className="absolute top-2 left-2 px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
+                      {qty > 0 && (
+                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-primary text-white text-xs font-bold rounded-full">
                           {qty}
                         </div>
                       )}
@@ -434,7 +456,7 @@ export default function TransactionPage() {
                           inCart
                             ? "text-primary"
                             : "text-slate-200 group-hover:text-primary"
-                        } ${qty > 1 ? "pl-8" : ""}`}
+                        } ${qty > 0 ? "pr-8" : ""}`}
                       >
                         {product.name}
                       </div>
@@ -661,6 +683,13 @@ export default function TransactionPage() {
         confirmText="Setuju"
         cancelText="Batal"
         variant="warning"
+      />
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleBarcodeScan}
       />
     </>
   );
