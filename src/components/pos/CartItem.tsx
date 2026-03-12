@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Minus, DollarSign, ChevronDown } from 'lucide-react';
 import type { CartItem as CartItemType, ProductUnit } from '../../store/useCartStore';
 import { formatCurrency } from '../../utils/format';
@@ -24,6 +24,29 @@ export default function CartItem({
 }: CartItemProps) {
     const [showUnitDropdown, setShowUnitDropdown] = useState(false);
     const [showDiscountModal, setShowDiscountModal] = useState(false);
+    const [qtyInput, setQtyInput] = useState(item.qty.toString());
+
+    const handleQtyInputChange = (value: string) => {
+        // Allow only numbers
+        setQtyInput(value.replace(/[^0-9]/g, ''));
+    };
+
+    const handleQtyInputBlur = () => {
+        const newQty = parseInt(qtyInput) || 1;
+        const validatedQty = Math.max(1, newQty);
+        setQtyInput(validatedQty.toString());
+        onUpdateQty(validatedQty);
+    };
+
+    const handleQtyInputKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleQtyInputBlur();
+        }
+    };
+
+    useEffect(() => {
+        setQtyInput(item.qty.toString());
+    }, [item.qty]);
 
     const baseSubtotal = item.qty * item.unit.price_sell;
     const discountAmount = item.discount
@@ -137,7 +160,15 @@ export default function CartItem({
                                 >
                                     <Minus size={16} />
                                 </button>
-                                <div className="w-12 text-center font-bold text-lg text-white">{item.qty}</div>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={qtyInput}
+                                    onChange={(e) => handleQtyInputChange(e.target.value)}
+                                    onBlur={handleQtyInputBlur}
+                                    onKeyDown={handleQtyInputKeyDown}
+                                    className="w-12 text-center font-bold text-lg text-white bg-transparent outline-none"
+                                />
                                 <button
                                     onClick={() => onUpdateQty(item.qty + 1)}
                                     className="p-2 text-primary hover:text-primary-foreground transition-colors"
