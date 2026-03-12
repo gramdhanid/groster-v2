@@ -529,7 +529,7 @@ export default function TransactionPage() {
 
                 {/* Customer, Notes, Fee Buttons */}
                 {items.length > 0 && (
-                  <div className="flex gap-2 pt-3 border-t border-slate-700">
+                  <div className="flex gap-2 pt-3 border-t border-slate-700 overflow-x-auto no-scrollbar">
                     <button
                       onClick={() => setShowCustomerSelector(true)}
                       className={`flex-1 py-2 px-3 rounded-lg font-bold text-sm flex items-center justify-center gap-1 ${
