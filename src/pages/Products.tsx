@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   Plus,
@@ -97,6 +98,7 @@ const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export default function ProductList() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
   const [search, setSearch] = useState("");
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -335,8 +337,7 @@ export default function ProductList() {
   };
 
   const handleOpenAdd = () => {
-    setSelectedProduct(null);
-    setIsProductModalOpen(true);
+    navigate("/products/new");
   };
 
   const handleBarcodeScan = (barcode: string) => {
@@ -391,24 +392,37 @@ export default function ProductList() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-4 pt-6">
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            type="text"
-            placeholder="Cari nama atau barcode..."
-            className="w-full pl-10 pr-12 py-3 bg-[#0f172a] border border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm text-white placeholder:text-slate-500"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Flex container for search + add button */}
+        <div className="flex items-center gap-2">
+          {/* Search bar - only camera button inside */}
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+            <input
+              type="text"
+              placeholder="Cari nama atau barcode..."
+              className="w-full pl-10 pr-12 py-3 bg-[#0f172a] border border-slate-800 rounded-xl outline-none focus:ring-2 focus:ring-primary shadow-sm text-white placeholder:text-slate-500"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button
+              onClick={handleOpenScanner}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
+              title="Scan barcode dengan kamera"
+            >
+              <Camera size={20} />
+            </button>
+          </div>
+
+          {/* Add Product button - SEPARATE from search */}
           <button
-            onClick={handleOpenScanner}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
-            title="Scan barcode dengan kamera"
+            onClick={handleOpenAdd}
+            className="bg-primary text-white p-3 rounded-xl hover:bg-primary/90 transition-colors flex items-center justify-center"
+            title="Tambah produk baru"
           >
-            <Camera size={20} />
+            <Plus size={20} />
           </button>
         </div>
 
@@ -653,13 +667,6 @@ export default function ProductList() {
           ))
         )}
       </div>
-
-      <button
-        onClick={handleOpenAdd}
-        className="fixed bottom-24 right-4 w-16 h-16 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-30 shadow-primary/40"
-      >
-        <Plus size={36} />
-      </button>
 
       <ProductModal
         isOpen={isProductModalOpen}
