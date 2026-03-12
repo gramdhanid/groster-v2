@@ -1,7 +1,10 @@
-import { Wallet, Receipt, TrendingUp, RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Wallet, Receipt, TrendingUp, RefreshCw, Eye, EyeOff, ChevronDown, ChevronUp, DollarSign, CreditCard, AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
 import SyncStatusModal from "@/components/layout/SyncStatusModal";
 import { useState } from "react";
+import type { CashflowSummary } from "@/types/cashflow";
+
+type CashflowCategory = 'cash' | 'cashless' | 'receivables';
 
 interface MetricsCardProps {
   revenue: number;
@@ -11,6 +14,9 @@ interface MetricsCardProps {
   profitGrowth: number;
   transactionGrowth: number;
   isLoading?: boolean;
+  cashflowData?: CashflowSummary;
+  cashflowLoading?: boolean;
+  onCashflowClick?: (category: CashflowCategory) => void;
 }
 
 export default function MetricsCard({
@@ -21,6 +27,9 @@ export default function MetricsCard({
   profitGrowth,
   transactionGrowth,
   isLoading = false,
+  cashflowData,
+  cashflowLoading = false,
+  onCashflowClick,
 }: MetricsCardProps) {
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState<"synced" | "pending" | "error">(
@@ -28,6 +37,7 @@ export default function MetricsCard({
   );
   const [pendingCount] = useState(0);
   const [isHidden, setIsHidden] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleSyncClick = () => {
     setIsSyncModalOpen(true);
@@ -41,9 +51,22 @@ export default function MetricsCard({
     );
   }
 
+  const handleCardClick = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleCategoryClick = (category: CashflowCategory) => {
+    if (onCashflowClick) {
+      onCashflowClick(category);
+    }
+  };
+
   return (
     <>
-      <div className="relative bg-gradient-to-br from-primary to-green-800 rounded-2xl p-6 shadow-lg overflow-hidden">
+      <div
+        className="relative bg-gradient-to-br from-primary to-green-800 rounded-2xl p-6 shadow-lg overflow-hidden transition-all duration-200 hover:scale-[1.01] cursor-pointer"
+        onClick={handleCardClick}
+      >
         {/* Background decoration */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -69,7 +92,7 @@ export default function MetricsCard({
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => setIsHidden(!isHidden)}
                 className="p-2 text-white/50 hover:text-white/80 transition-colors"
@@ -123,6 +146,82 @@ export default function MetricsCard({
                 {Math.abs(transactionGrowth).toFixed(1)}%
               </p>
             </div>
+          </div>
+
+          {/* Expandable Cashflow Section */}
+          <div
+            className={`
+              overflow-hidden transition-all duration-300 ease-in-out
+              ${isExpanded ? 'max-h-40 opacity-100 mt-4' : 'max-h-0 opacity-0'}
+            `}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="border-t border-white/20 my-4" />
+
+            {/* Cashflow Content */}
+            {cashflowLoading ? (
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex flex-col items-center gap-1.5 animate-pulse">
+                    <div className="h-5 bg-white/20 rounded w-16"></div>
+                    <div className="h-5 w-5 rounded-full bg-white/20"></div>
+                    <div className="h-3 bg-white/20 rounded w-12"></div>
+                  </div>
+                ))}
+              </div>
+            ) : cashflowData ? (
+              <div className="grid grid-cols-3 gap-4">
+                {/* Tunai */}
+                <button
+                  onClick={() => handleCategoryClick('cash')}
+                  className="flex flex-col items-center gap-1.5 hover:bg-white/10 p-2 rounded-lg transition-colors"
+                >
+                  <div className="p-1 rounded-lg bg-green-400/20">
+                    <DollarSign className="text-green-300" size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xs text-white/80">Tunai</span>
+                </button>
+
+                {/* Non-Tunai */}
+                <button
+                  onClick={() => handleCategoryClick('cashless')}
+                  className="flex flex-col items-center gap-1.5 hover:bg-white/10 p-2 rounded-lg transition-colors"
+                >
+                  <div className="p-1 rounded-lg bg-blue-400/20">
+                    <CreditCard className="text-blue-300" size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xs text-white/80">Non-Tunai</span>
+                </button>
+
+                {/* Piutang */}
+                <button
+                  onClick={() => handleCategoryClick('receivables')}
+                  className="flex flex-col items-center gap-1.5 hover:bg-white/10 p-2 rounded-lg transition-colors"
+                >
+                  <div className="p-1 rounded-lg bg-orange-400/20">
+                    <AlertCircle className="text-orange-300" size={20} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-xs text-white/80">Piutang</span>
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Chevron indicator */}
+          <div className="flex justify-center mt-4">
+            <button
+              className="p-1 text-white/40 hover:text-white/80 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
+            </button>
           </div>
         </div>
       </div>

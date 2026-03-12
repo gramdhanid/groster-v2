@@ -6,7 +6,6 @@ import TopSellingProducts from "@/components/dashboard/TopSellingProducts";
 import SalesTrendChart from "@/components/dashboard/SalesTrendChart";
 import RestockModal from "@/components/dashboard/RestockModal";
 import ProductDetailModal from "@/components/dashboard/ProductDetailModal";
-import CashflowCard from "@/components/dashboard/CashflowCard";
 import CashflowModal from "@/components/dashboard/CashflowModal";
 import { useDailyMetrics } from "@/hooks/dashboard/useDailyMetrics";
 import { useLowStockProducts } from "@/hooks/dashboard/useLowStockProducts";
@@ -15,6 +14,8 @@ import { useSalesTrend } from "@/hooks/dashboard/useSalesTrend";
 import { useSuppliers } from "@/hooks/dashboard/useSuppliers";
 import { useCashflow } from "@/hooks/dashboard/useCashflow";
 import type { TimeFilter, LowStockProduct } from "@/types/dashboard";
+
+type CashflowCategory = 'cash' | 'cashless' | 'receivables';
 
 export default function Dashboard() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("7days");
@@ -26,6 +27,9 @@ export default function Dashboard() {
   );
   const [selectedDetailProduct, setSelectedDetailProduct] =
     useState<LowStockProduct | null>(null);
+  const [selectedCashflowSection, setSelectedCashflowSection] = useState<
+    CashflowCategory | undefined
+  >();
 
   // Fetch all data using TanStack Query hooks
   const { data: dailyData, isLoading: dailyLoading } = useDailyMetrics();
@@ -62,7 +66,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Metrics Card - GoPay style */}
+      {/* Metrics Card - GoPay style with expandable cashflow */}
       {dailyData && (
         <MetricsCard
           revenue={dailyData.metrics.revenue}
@@ -72,15 +76,14 @@ export default function Dashboard() {
           profitGrowth={dailyData.growth.profitGrowth}
           transactionGrowth={dailyData.growth.transactionGrowth}
           isLoading={dailyLoading}
+          cashflowData={cashflowData}
+          cashflowLoading={cashflowLoading}
+          onCashflowClick={(category) => {
+            setSelectedCashflowSection(category);
+            setIsCashflowModalOpen(true);
+          }}
         />
       )}
-
-      {/* Cashflow Card */}
-      <CashflowCard
-        data={cashflowData}
-        isLoading={cashflowLoading}
-        onClick={() => setIsCashflowModalOpen(true)}
-      />
 
       {/* Sales Trend Chart */}
       <SalesTrendChart
@@ -123,9 +126,13 @@ export default function Dashboard() {
       {/* Cashflow Modal */}
       <CashflowModal
         isOpen={isCashflowModalOpen}
-        onClose={() => setIsCashflowModalOpen(false)}
+        onClose={() => {
+          setIsCashflowModalOpen(false);
+          setSelectedCashflowSection(undefined);
+        }}
         data={cashflowData}
         isLoading={cashflowLoading}
+        defaultSection={selectedCashflowSection}
       />
 
       {/* Product Detail Modal */}

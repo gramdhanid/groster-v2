@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
 import { cn } from "@/lib/utils";
@@ -12,11 +12,14 @@ import type {
   DueDateStatus,
 } from "@/types/cashflow";
 
+type CashflowCategory = 'cash' | 'cashless' | 'receivables';
+
 interface CashflowModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: CashflowSummary | undefined;
   isLoading?: boolean;
+  defaultSection?: CashflowCategory;
 }
 
 interface SectionProps {
@@ -130,16 +133,27 @@ export default function CashflowModal({
   onClose,
   data,
   isLoading,
+  defaultSection,
 }: CashflowModalProps) {
   const [expandedSections, setExpandedSections] = useState<{
     cash: boolean;
     cashless: boolean;
     receivables: boolean;
   }>({
-    cash: true,
-    cashless: false,
-    receivables: false,
+    cash: defaultSection === 'cash' ? true : false,
+    cashless: defaultSection === 'cashless' ? true : false,
+    receivables: defaultSection === 'receivables' ? true : false,
   });
+
+  useEffect(() => {
+    if (defaultSection) {
+      setExpandedSections({
+        cash: defaultSection === 'cash',
+        cashless: defaultSection === 'cashless',
+        receivables: defaultSection === 'receivables',
+      });
+    }
+  }, [defaultSection]);
 
   const toggleSection = (section: "cash" | "cashless" | "receivables") => {
     setExpandedSections((prev) => ({
