@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Minus, DollarSign, ChevronDown } from "lucide-react";
+import { Plus, Minus, ChevronDown, Percent } from "lucide-react";
 import type {
   CartItem as CartItemType,
   ProductUnit,
@@ -36,7 +36,7 @@ export default function CartItem({
 
   const handleQtyInputBlur = () => {
     const newQty = parseInt(qtyInput) || 1;
-    const validatedQty = Math.max(1, newQty);
+    const validatedQty = Math.min(9999, Math.max(1, newQty));
     setQtyInput(validatedQty.toString());
     onUpdateQty(validatedQty);
   };
@@ -134,7 +134,7 @@ export default function CartItem({
                     : "bg-slate-800/50 text-slate-400 border border-slate-700 hover:border-slate-600"
                 }`}
               >
-                <DollarSign size={14} />
+                <Percent size={14} />
                 {item.discount
                   ? `${item.discount.type === "percent" ? item.discount.value + "%" : formatCurrency(item.discount.value)}`
                   : "Diskon"}
@@ -150,7 +150,7 @@ export default function CartItem({
                     <button
                       key={preset}
                       onClick={() => onUpdateQty(item.qty + preset)}
-                      className="px-3 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:border-slate-600 transition-all active:scale-95"
+                      className="px-2 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-xs font-bold text-slate-400 hover:text-white hover:border-slate-600 transition-all active:scale-95"
                     >
                       +{preset}
                     </button>
@@ -172,7 +172,8 @@ export default function CartItem({
                     onChange={(e) => handleQtyInputChange(e.target.value)}
                     onBlur={handleQtyInputBlur}
                     onKeyDown={handleQtyInputKeyDown}
-                    className="w-12 text-center font-bold text-lg text-white bg-transparent outline-none"
+                    maxLength={4}
+                    className="w-10 text-center font-bold text-base text-white bg-transparent outline-none"
                   />
                   <button
                     onClick={() => onUpdateQty(item.qty + 1)}

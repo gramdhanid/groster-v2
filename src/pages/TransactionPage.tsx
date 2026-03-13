@@ -401,7 +401,7 @@ export default function TransactionPage() {
             </button>
           </div>
 
-          <div className="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2 mt-4 overflow-x-auto overflow-y-hidden no-scrollbar">
             {TOP_CATEGORIES.map((cat) => (
               <button
                 key={cat}
