@@ -292,7 +292,7 @@ export default function TransactionPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#020617] flex flex-col">
+      <div className="h-screen bg-[#020617] flex flex-col overflow-hidden">
         {/* Sticky Header */}
         <div className="sticky top-0 z-40 bg-[#0f172a] border-b border-slate-800 px-4 py-3">
           <div className="flex items-center justify-between">
@@ -379,7 +379,7 @@ export default function TransactionPage() {
         </div>
 
         {/* Search & Category */}
-        <div className="bg-[#0f172a] border-b border-slate-800 px-4 pb-4">
+        <div className="bg-[#0f172a] border-b border-slate-800 px-4 pt-4 pb-4">
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
@@ -419,7 +419,7 @@ export default function TransactionPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-y-auto pb-32">
+        <div className="flex-1 overflow-y-auto pb-24">
           {/* Product Grid */}
           <div className="p-4">
             {searchResults.length === 0 ? (

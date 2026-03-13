@@ -8,15 +8,17 @@ export default function MainLayout() {
   const hideBottomNav = [
     "/products/new",
     "/transactions/new",
-    "/transactions/payment"
+    "/transactions/payment",
   ].includes(location.pathname);
 
   return (
     <div className="min-h-screen bg-[#020617] flex flex-col text-slate-100">
       {/* Content Area - adjust padding based on nav visibility */}
-      <main className={`flex-1 pt-4 px-4 overflow-y-auto w-full max-w-2xl mx-auto shadow-sm ${
-        hideBottomNav ? "pb-4" : "pb-[80px]"
-      }`}>
+      <main
+        className={`flex-1 overflow-y-auto w-full max-w-2xl mx-auto shadow-sm ${
+          hideBottomNav ? "pb-4" : "pt-4 px-4 pb-[80px]"
+        }`}
+      >
         <Outlet />
       </main>
 
